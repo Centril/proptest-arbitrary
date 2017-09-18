@@ -1,0 +1,19 @@
+[package]
+name          = "proptest-arbitrary"
+version       = "0.1.0"
+authors       = ["Mazdak Farrokhzad <twingoow@gmail.com>"]
+license       = "MIT/Apache-2.0"
+readme        = "README.md"
+
+repository    = "https://github.com/Centril/proptest-arbitrary"
+documentation = "https://docs.rs/proptest-arbitrary"
+
+keywords      = ["arbitrary", "property", "testing", "quickcheck", "hypothesis"]
+categories    = ["development-tools::testing"]
+
+description = """
+The Arbitrary trait for proptest and implementations for standard types.
+"""
+
+[dependencies]
+proptest          = "0.3.0"
