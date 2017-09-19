@@ -11,12 +11,10 @@
 //!
 //! Proptest is a property testing framework (i.e., the [`QuickCheck`] family)
 //! inspired by the [Hypothesis](http://hypothesis.works/) framework for
-//! Python.
-//!
-//! This crate, `proptest-arbitrary`, additionally provides an [Arbitrary]
-//! trait which allows you to have a canonical [Strategy] per type.
+//! Python. This crate, `proptest-arbitrary`, additionally provides an
+//! [Arbitrary] trait which allows you to have a canonical [Strategy] per type.
 //! This is the equivalent of [Haskell QuickCheck's implementation of Arbitrary].
-//! In this interpretation of Arbitray, Strategy is the equivalent of the Gen
+//! In this interpretation of Arbitrary, Strategy is the equivalent of the Gen
 //! monad.
 //!
 //! Arbitrary is currently implemented as:
@@ -368,8 +366,8 @@ impl<'a, A, B> Arbitrary<'a> for collections::BTreeMap<A, B>
 where
     A: Arbitrary<'static> + Ord,
     B: Arbitrary<'static>,
-    <A as Arbitrary<'static>>::Strategy: 'static,
-    <B as Arbitrary<'static>>::Strategy: 'static,
+    StrategyOf<A>: 'static,
+    StrategyOf<B>: 'static,
 {
     valuetree!();
     type Strategy = collection::BTreeMapStrategy<A::Strategy, B::Strategy>;
