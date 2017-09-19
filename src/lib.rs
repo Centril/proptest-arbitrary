@@ -7,6 +7,8 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
+//! NOTE: This version is still WIP; don't use yet, just reserving at crates.io.
+//!
 //! Proptest is a property testing framework (i.e., the [`QuickCheck`] family)
 //! inspired by the [Hypothesis](http://hypothesis.works/) framework for
 //! Python.
@@ -20,9 +22,9 @@
 //! Arbitrary is currently implemented as:
 //!
 //! ```rust
-//! extern crate proptest;
-//! use std::fmt::Debug;
-//! use proptest::strategy::{Strategy, ValueTree};
+//! # extern crate proptest;
+//! # use std::fmt::Debug;
+//! # use proptest::strategy::{Strategy, ValueTree};
 //!
 //! /// Arbitrary determines a canonical Strategy for the implementing type.
 //! ///
@@ -46,6 +48,8 @@
 //!     /// for implementing Arbitrary for other types.
 //!     type Strategy: Strategy<Value = Self::ValueTree>;
 //! }
+//!
+//! # fn main() {}
 //! ```
 //!
 //! <!-- NOREADME
@@ -153,6 +157,8 @@ pub trait Arbitrary: Sized + Debug {
 /// fn gen_bool(x: bool) -> <bool as Arbitrary>::Strategy {
 ///     arbitrary()
 /// }
+///
+/// # fn main() {}
 /// ```
 ///
 /// [`any::<T>()`]: fn.any.html
@@ -186,6 +192,8 @@ where
 /// fn gen_bool(x: bool) -> <bool as Arbitrary>::Strategy {
 ///     arbitrary()
 /// }
+///
+/// # fn main() {}
 /// ```
 ///
 /// [`arbitrary`]: fn.arbitrary.html
