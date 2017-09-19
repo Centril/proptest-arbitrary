@@ -29,7 +29,7 @@
 //! /// Arbitrary determines a canonical Strategy for the implementing type.
 //! ///
 //! /// ...
-//! pub trait Arbitrary : Sized + Debug {
+//! pub trait Arbitrary<'a> : Sized + Debug {
 //!     /// Generates a Strategy for producing arbitrary values of type the
 //!     /// implementing type (Self).
 //!     fn arbitrary() -> Self::Strategy;
@@ -89,10 +89,11 @@
 //! https://hackage.haskell.org/package/QuickCheck
 
 extern crate proptest;
+extern crate regex_syntax;
 
 use std::fmt::Debug;
 
-use proptest::strategy::{Strategy, ValueTree};
+use proptest::strategy::{BoxedStrategy, Strategy, ValueTree};
 
 //==============================================================================
 // Arbitrary trait + auxilary functions:
@@ -112,7 +113,10 @@ use proptest::strategy::{Strategy, ValueTree};
 ///
 /// [Haskell QuickCheck's implementation of Arbitrary]:
 /// https://hackage.haskell.org/package/QuickCheck/docs/Test-QuickCheck-Arbitrary.html
-pub trait Arbitrary: Sized + Debug {
+pub trait Arbitrary<'a>: Sized + Debug {
+    // Unfortunately, Generic Associated Types won't be in stable for some time.
+    // Tracking issue: https://github.com/rust-lang/rust/issues/44265
+
     /// Generates a [Strategy] for producing arbitrary values of type the
     /// implementing type (Self).
     ///
@@ -139,12 +143,37 @@ pub trait Arbitrary: Sized + Debug {
     type Strategy: Strategy<Value = Self::ValueTree>;
 }
 
-/// Generates a [Strategy] producing [Arbitrary] values of `T`.
-/// Works better with type inference than [`any::<T>()`].
+/// If you want to be future proof, `StrategyOf` allows you to mention the
+/// type of [Strategy] for the input type without directly using associated
+/// types. This way, if implementation of [Arbitrary] changes, your tests
+/// should not break.
 ///
-/// With this version, you shouldn't need to specify any of `T`, `S`, `V`.
+/// This is the same as [StrategyType<'static, A>].
+///
+/// [Arbitrary]: trait.Arbitrary.html
+/// [StrategyType<'static, A>]: type.StrategyType.html
+/// [Strategy]: ../proptest/strategy/trait.Strategy.html
+pub type StrategyOf<A> = StrategyType<'static, A>;
+
+/// If you want to be future proof, `StrategyType` allows you to mention the
+/// type of [Strategy] for the input type without directly using associated
+/// types. This way, if implementation of [Arbitrary] changes, your tests
+/// should not break.
+///
+/// Unless the strategy uses lifetimes in the type, you most likely want
+/// [StrategyOf\<A\>] instead.
+///
+/// [Arbitrary]: trait.Arbitrary.html
+/// [StrategyOf\<A\>]: type.StrategyOf.html
+/// [Strategy]: ../proptest/strategy/trait.Strategy.html
+pub type StrategyType<'a, A> = <A as Arbitrary<'a>>::Strategy;
+
+/// Generates a [Strategy] producing [Arbitrary] values of `A`.
+/// Works better with type inference than [`any::<A>()`].
+///
+/// With this version, you shouldn't need to specify any of `A`, `S`, `V`.
 /// This can have a positive effect on type inference.
-/// However, if you want specify `T`, you should use [`any::<T>()`] instead.
+/// However, if you want specify `A`, you should use [`any::<A>()`] instead.
 ///
 /// # Example
 ///
@@ -152,30 +181,29 @@ pub trait Arbitrary: Sized + Debug {
 ///
 /// ```rust
 /// extern crate proptest_arbitrary;
-/// use proptest_arbitrary::{arbitrary, Arbitrary};
+/// use proptest_arbitrary::{arbitrary, StrategyOf};
 ///
-/// fn gen_bool(x: bool) -> <bool as Arbitrary>::Strategy {
+/// fn gen_bool(x: bool) -> StrategyOf<bool> {
 ///     arbitrary()
 /// }
 ///
 /// # fn main() {}
 /// ```
 ///
-/// [`any::<T>()`]: fn.any.html
+/// [`any::<A>()`]: fn.any.html
 /// [Arbitrary]: trait.Arbitrary.html
 /// [Strategy]: ../proptest/strategy/trait.Strategy.html
-pub fn arbitrary<T, S, V>() -> S
+pub fn arbitrary<'a, A, S, V>() -> S
 where
-    V: ValueTree<Value = T>,
+    V: ValueTree<Value = A>,
     S: Strategy<Value = V>,
-    T: Arbitrary<Strategy = S, ValueTree = V>,
+    A: Arbitrary<'a, Strategy = S, ValueTree = V>,
 {
-    T::arbitrary()
+    A::arbitrary()
 }
 
-/*
-/// Generates a [Strategy] producing [Arbitrary] values of `T`.
-/// Unlike [`arbitrary`], it should be used for being explicit on what `T` is.
+/// Generates a [Strategy] producing [Arbitrary] values of `A`.
+/// Unlike [`arbitrary`], it should be used for being explicit on what `A` is.
 ///
 /// Use this version instead of [`arbitrary`] if you want to be clear which
 /// type you want to generate a Strategy for, or if you don't have an anchoring
@@ -187,10 +215,10 @@ where
 ///
 /// ```rust
 /// extern crate proptest_arbitrary;
-/// use proptest_arbitrary::{arbitrary, Arbitrary};
+/// use proptest_arbitrary::{any, StrategyOf};
 ///
-/// fn gen_bool(x: bool) -> <bool as Arbitrary>::Strategy {
-///     arbitrary()
+/// fn gen_bool(x: bool) -> StrategyOf<bool> {
+///     any::<bool>()
 /// }
 ///
 /// # fn main() {}
@@ -199,12 +227,12 @@ where
 /// [`arbitrary`]: fn.arbitrary.html
 /// [Arbitrary]: trait.Arbitrary.html
 /// [Strategy]: ../proptest/strategy/trait.Strategy.html
-pub fn any<T: Arbitrary>() -> <T as Arbitrary>::Strategy {
-    T::arbitrary()
+pub fn any<'a, A: Arbitrary<'a>>() -> StrategyType<'a, A> {
+    A::arbitrary()
 }
 
-/// Generates a [Strategy] producing [Arbitrary] values of `T`.
-/// This version boxes the Strategy, and thus you needn't specify `T`.
+/// Generates a [Strategy] producing [Arbitrary] values of `A`.
+/// This version boxes the Strategy, and thus you needn't specify `A`.
 ///
 /// # Example
 ///
@@ -214,57 +242,40 @@ pub fn any<T: Arbitrary>() -> <T as Arbitrary>::Strategy {
 /// extern crate proptest;
 /// extern crate proptest_arbitrary;
 ///
-/// use proptest::strategy::BoxStrategy;
+/// use proptest::strategy::BoxedStrategy;
 /// use proptest_arbitrary::box_any;
 ///
 /// fn gen_bool(x: bool) -> BoxedStrategy<bool> {
 ///     box_any()
 /// }
+///
+/// # fn main() {}
 /// ```
 ///
 /// [`arbitrary`]: fn.arbitrary.html
 /// [Arbitrary]: trait.Arbitrary.html
 /// [Strategy]: ../proptest/strategy/trait.Strategy.html
-pub fn box_any<T: Arbitrary>() -> BoxedStrategy<T>
+pub fn box_any<A: Arbitrary<'static> + 'static>() -> BoxedStrategy<A>
 where
-    <T as Arbitrary>::Strategy: 'static
+    StrategyOf<A>: 'static,
 {
-    any::<T>().boxed()
+    any::<A>().boxed()
 }
-*/
-
-
-/*
-
-macro_rules! strat_of {
-    ($type: ty) => {
-        <bool as Arbitrary>::Strategy
-    }
-}
-
-fn gen_bool(x: bool) -> <bool as Arbitrary>::Strategy {
-    any::<bool>()
-}
-
-fn gen_bool2(x: bool) -> <bool as Arbitrary>::Strategy {
-    arbitrary()
-}
-
-
-*/
-
-
 
 //==============================================================================
-// Basic macros:
+// Macros for quick implementing:
 //==============================================================================
 
-// macro_rules! untype { $($x: tt)* => { $($x)* }; }
+macro_rules! valuetree {
+    () => {
+        type ValueTree = <Self::Strategy as Strategy>::Value;
+    };
+}
 
 macro_rules! impl_arbitrary {
     ($self: ty, $st: ty, $logic: expr) => {
-        impl Arbitrary for $self {
-            type ValueTree = <$st as Strategy>::Value;
+        impl<'a> Arbitrary<'a> for $self {
+            valuetree!();
             type Strategy = $st;
             fn arbitrary() -> Self::Strategy { $logic }
         }
@@ -277,11 +288,36 @@ macro_rules! impls {
     };
 }
 
+macro_rules! impl_unary {
+    ($typ: ident, $strat: ident, $($bound : path),* => $logic: expr) => {
+        impl<'a, A: Arbitrary<'a> $(+ $bound)*> Arbitrary<'a> for $typ<A> {
+            valuetree!();
+            type Strategy = $strat<A::Strategy>;
+            fn arbitrary() -> Self::Strategy {
+                $logic
+            }
+        }
+    };
+}
+
+macro_rules! impl_binary {
+    ($typ: ident, $strat: ident, $($bound : path),* => $logic: expr) => {
+        impl<'a, A: Arbitrary<'a> $(+ $bound)* , B: Arbitrary<'a>> Arbitrary<'a>
+        for $typ<A, B> {
+            valuetree!();
+            type Strategy = $strat<A::Strategy, B::Strategy>;
+            fn arbitrary() -> Self::Strategy {
+                $logic
+            }
+        }
+    };
+}
+
 //==============================================================================
 // Primitive types:
 //==============================================================================
 
-use proptest::bool;
+use proptest::{bool, char};
 use proptest::num::{isize, usize, f32, f64, i16, i32, i64, i8, u16, u32, u64, u8};
 
 impls! {
@@ -290,19 +326,165 @@ impls! {
     u8, u16, u32, u64, usize
 }
 
+impl_arbitrary!(char, char::CharStrategy<'a>, char::ANY);
+
+//==============================================================================
+// Option + Result:
+//==============================================================================
+
+use proptest::option::{self, OptionStrategy};
+use proptest::result::{self, MaybeOk};
+
+impl_unary!(Option, OptionStrategy, => option::of(arbitrary()));
+impl_binary!(Result, MaybeOk, => result::maybe_ok(arbitrary(), arbitrary()));
+
+//==============================================================================
+// Collections:
+//==============================================================================
+
+use std::hash::Hash;
+use std::vec::Vec;
+use std::collections::{self, BTreeSet, BinaryHeap, HashMap, HashSet, LinkedList, VecDeque};
+
+use proptest::collection::{self, binary_heap, btree_set, hash_map, hash_set, linked_list, vec,
+                           vec_deque, BTreeSetStrategy, BinaryHeapStrategy, HashMapStrategy,
+                           HashSetStrategy, LinkedListStrategy, VecDequeStrategy, VecStrategy};
+
+impl_unary!(Vec, VecStrategy, => vec(arbitrary(), 0..100));
+impl_unary!(VecDeque, VecDequeStrategy, => vec_deque(arbitrary(), 0..100));
+impl_unary!(LinkedList, LinkedListStrategy, => linked_list(arbitrary(), 0..100));
+impl_unary!(BTreeSet, BTreeSetStrategy, Ord => btree_set(arbitrary(), 0..100));
+impl_unary!(BinaryHeap, BinaryHeapStrategy, Ord => {
+    binary_heap(arbitrary(), 0..100)
+});
+impl_unary!(HashSet, HashSetStrategy, Hash, Eq => {
+    hash_set(arbitrary(), 0..100)
+});
+impl_binary!(HashMap, HashMapStrategy, Hash, Eq => {
+    hash_map(arbitrary(), arbitrary(), 0..100)
+});
+
+impl<'a, A, B> Arbitrary<'a> for collections::BTreeMap<A, B>
+where
+    A: Arbitrary<'static> + Ord,
+    B: Arbitrary<'static>,
+    <A as Arbitrary<'static>>::Strategy: 'static,
+    <B as Arbitrary<'static>>::Strategy: 'static,
+{
+    valuetree!();
+    type Strategy = collection::BTreeMapStrategy<A::Strategy, B::Strategy>;
+    fn arbitrary() -> Self::Strategy {
+        collection::btree_map(arbitrary(), arbitrary(), 0..100)
+    }
+}
+
+//==============================================================================
+// String:
+//==============================================================================
+
+use proptest::string::{string_regex_parsed, RegexGeneratorStrategy};
+
+use regex_syntax::Expr::Concat;
+use regex_syntax::Expr::*;
+use regex_syntax::Repeater::ZeroOrMore;
+
+impl_arbitrary!(String, RegexGeneratorStrategy<String>, {
+    // Same as \\PC*
+    string_regex_parsed(&Concat(vec![
+        Literal {
+            chars: vec!['\\', 'P'],
+            casei: false,
+        },
+        Repeat {
+            e: Box::new(Literal {
+                chars: vec!['C'],
+                casei: false,
+            }),
+            r: ZeroOrMore,
+            greedy: true,
+        },
+    ])).unwrap()
+});
+
 //==============================================================================
 // Tuples:
 //==============================================================================
 
-/*
-
-impl<A: Arbitrary, B: Arbitrary> Arbitrary for (A, B) {
-    type ValueTree = <(A::Strategy, B::Strategy) as Strategy>::Value;
-    type Strategy = (A::Strategy, B::Strategy);
-    fn arbitrary() -> Self::Strategy {
-        (arbitrary(), arbitrary())
-    }
+macro_rules! impl_tuple {
+    ($($typ: ident),*) => {
+        impl<'a, $($typ : Arbitrary<'a>),*> Arbitrary<'a> for ($($typ,)*) {
+            valuetree!();
+            type Strategy = ($($typ::Strategy,)*);
+            fn arbitrary() -> Self::Strategy {
+                ($(any::<$typ>()),*,)
+            }
+        }
+    };
 }
 
-//impl_arbitrary!((), (), ());
-*/
+impl_tuple!(A);
+impl_tuple!(A, B);
+impl_tuple!(A, B, C);
+impl_tuple!(A, B, C, D);
+impl_tuple!(A, B, C, D, E);
+impl_tuple!(A, B, C, D, E, F);
+impl_tuple!(A, B, C, D, E, F, G);
+impl_tuple!(A, B, C, D, E, F, G, H);
+impl_tuple!(A, B, C, D, E, F, G, H, I);
+impl_tuple!(A, B, C, D, E, F, G, H, I, J);
+
+//==============================================================================
+// Arrays:
+//==============================================================================
+
+macro_rules! impl_array {
+    ($($n: expr),*) => {
+        $(
+            impl<'a, A: Arbitrary<'a>> Arbitrary<'a> for [A; $n] {
+                valuetree!();
+                type Strategy = [A::Strategy; $n];
+                fn arbitrary() -> Self::Strategy {
+                    any::<[A; $n]>()
+                }
+            }
+        )*
+    };
+}
+
+impl_array!(
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16,
+    17,
+    18,
+    19,
+    20,
+    21,
+    22,
+    23,
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31
+);
+
+//==============================================================================
+// Sandbox / Dummy region for trying stuff out first:
+//==============================================================================

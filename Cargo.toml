@@ -17,3 +17,4 @@ The Arbitrary trait for proptest and implementations for standard types.
 
 [dependencies]
 proptest          = "0.3.0"
+regex-syntax      = "0.4.1"
