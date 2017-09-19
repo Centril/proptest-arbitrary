@@ -141,7 +141,7 @@ pub trait Arbitrary<'a>: Sized + Debug {
     type Strategy: Strategy<Value = Self::ValueTree>;
 }
 
-/// If you want to be future proof, `StrategyOf` allows you to mention the
+/// If you want to be future proof, `StrategyFor` allows you to mention the
 /// type of [Strategy] for the input type without directly using associated
 /// types. This way, if implementation of [Arbitrary] changes, your tests
 /// should not break.
@@ -151,7 +151,7 @@ pub trait Arbitrary<'a>: Sized + Debug {
 /// [Arbitrary]: trait.Arbitrary.html
 /// [StrategyType<'static, A>]: type.StrategyType.html
 /// [Strategy]: ../proptest/strategy/trait.Strategy.html
-pub type StrategyOf<A> = StrategyType<'static, A>;
+pub type StrategyFor<A> = StrategyType<'static, A>;
 
 /// If you want to be future proof, `StrategyType` allows you to mention the
 /// type of [Strategy] for the input type without directly using associated
@@ -159,10 +159,10 @@ pub type StrategyOf<A> = StrategyType<'static, A>;
 /// should not break.
 ///
 /// Unless the strategy uses lifetimes in the type, you most likely want
-/// [StrategyOf\<A\>] instead.
+/// [StrategyFor\<A\>] instead.
 ///
 /// [Arbitrary]: trait.Arbitrary.html
-/// [StrategyOf\<A\>]: type.StrategyOf.html
+/// [StrategyFor\<A\>]: type.StrategyFor.html
 /// [Strategy]: ../proptest/strategy/trait.Strategy.html
 pub type StrategyType<'a, A> = <A as Arbitrary<'a>>::Strategy;
 
@@ -179,9 +179,9 @@ pub type StrategyType<'a, A> = <A as Arbitrary<'a>>::Strategy;
 ///
 /// ```rust
 /// extern crate proptest_arbitrary;
-/// use proptest_arbitrary::{arbitrary, StrategyOf};
+/// use proptest_arbitrary::{arbitrary, StrategyFor};
 ///
-/// fn gen_bool(x: bool) -> StrategyOf<bool> {
+/// fn gen_bool(x: bool) -> StrategyFor<bool> {
 ///     arbitrary()
 /// }
 ///
@@ -213,9 +213,9 @@ where
 ///
 /// ```rust
 /// extern crate proptest_arbitrary;
-/// use proptest_arbitrary::{any, StrategyOf};
+/// use proptest_arbitrary::{any, StrategyFor};
 ///
-/// fn gen_bool(x: bool) -> StrategyOf<bool> {
+/// fn gen_bool(x: bool) -> StrategyFor<bool> {
 ///     any::<bool>()
 /// }
 ///
@@ -255,7 +255,7 @@ pub fn any<'a, A: Arbitrary<'a>>() -> StrategyType<'a, A> {
 /// [Strategy]: ../proptest/strategy/trait.Strategy.html
 pub fn box_any<A: Arbitrary<'static> + 'static>() -> BoxedStrategy<A>
 where
-    StrategyOf<A>: 'static,
+    StrategyFor<A>: 'static,
 {
     any::<A>().boxed()
 }

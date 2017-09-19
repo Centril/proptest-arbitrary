@@ -30,8 +30,8 @@ impl<'a, A, B> Arbitrary<'a> for BTreeMap<A, B>
 where
     A: Arbitrary<'static> + Ord,
     B: Arbitrary<'static>,
-    StrategyOf<A>: 'static,
-    StrategyOf<B>: 'static,
+    StrategyFor<A>: 'static,
+    StrategyFor<B>: 'static,
 {
     valuetree!();
     type Strategy = BTreeMapStrategy<A::Strategy, B::Strategy>;
