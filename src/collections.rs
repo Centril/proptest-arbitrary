@@ -8,11 +8,13 @@ use std::hash::Hash;
 use std::vec::Vec;
 use std::collections::*;
 use std::ops::Range;
+use std::sync::Arc;
+use std::rc::Rc;
 
 use proptest::collection::*;
 use proptest::strategy::{Just, TupleUnion};
 
-use from_mapper::{static_map, StaticMap, W};
+use from_mapper::{static_map, FnPtrMap, W};
 
 //==============================================================================
 // Params config structs:
@@ -176,13 +178,12 @@ where
 // Bound:
 //==============================================================================
 
-type BoundFn<A> = fn(A) -> Bound<A>;
-type SM<'a, A> = StaticMap<<A as Arbitrary<'a>>::Strategy, A, Bound<A>, BoundFn<A>>;
+type SM<'a, A> = FnPtrMap<StrategyType<'a, A>, A, Bound<A>>;
 type BoundStrategy<'a, A> = TupleUnion<(W<SM<'a, A>>, W<SM<'a, A>>, W<Just<Bound<A>>>)>;
 
 impl<'a, A: Arbitrary<'a> + Clone> Arbitrary<'a> for Bound<A>
 where
-    A::Parameters: Clone,
+    ParamsType<'a, A>: Clone,
 {
     valuetree!();
     type Parameters = A::Parameters;
@@ -199,3 +200,20 @@ where
 //==============================================================================
 // Alloc, i.e: Box, ...:
 //==============================================================================
+
+macro_rules! impl_smartptr {
+    ($ptr: ident) => {
+        impl<'a, A: Arbitrary<'a> + Clone> Arbitrary<'a> for $ptr<A> {
+            valuetree!();
+            type Parameters = A::Parameters;
+            type Strategy = FnPtrMap<StrategyType<'a, A>, A, $ptr<A>>;
+            fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
+                static_map(any_with::<A, _>(args), $ptr::new)
+            }
+        }
+    };
+}
+
+impl_smartptr!(Box);
+impl_smartptr!(Rc);
+impl_smartptr!(Arc);

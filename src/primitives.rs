@@ -13,4 +13,6 @@ impls! {
     u8, u16, u32, u64, usize
 }
 
+
+// TODO: handle this better w.r.t. ParamsType.
 impl_arbitrary!(char, char::CharStrategy<'a>, char::ANY);

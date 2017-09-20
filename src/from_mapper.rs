@@ -51,6 +51,8 @@ where
 
 pub(crate) type StaticMap<S, I, O, F> = Map<S, FnMap<I, O, F>>;
 
+pub(crate) type FnPtrMap<S, I, O> = Map<S, FnMap<I, O, fn(I) -> O>>;
+
 pub(crate) fn static_map<S, O, F>(
     strat: S,
     fun: F,
