@@ -5,6 +5,9 @@
 
 use super::*;
 
+// TODO: Consider allowing the user to pass a function which either mutates or
+// accumulates the inner parameters for [0 -> N] in the strategy array.
+
 macro_rules! impl_array {
     ($($n: expr),*) => {
         $(

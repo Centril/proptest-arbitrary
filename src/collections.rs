@@ -20,6 +20,8 @@ use from_mapper::{static_map, FnPtrMap, W};
 // Params config structs:
 //==============================================================================
 
+// TODO: Refactor with OptionParams + ResultParams.
+
 /// Parameters for configuring the generation of `StrategyFor<...<A>>`.
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct UnaryRangedParams<A> {

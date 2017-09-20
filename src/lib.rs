@@ -505,3 +505,6 @@ mod tuples;
 //==============================================================================
 // Sandbox / Dummy region for trying stuff out first:
 //==============================================================================
+
+// TODO: copy the structure of libstd so everything becomes clearer.
+// This will bloat the number of modules somewhat, but that's OK.
