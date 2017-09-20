@@ -16,5 +16,5 @@ The Arbitrary trait for proptest and implementations for standard types.
 """
 
 [dependencies]
-proptest          = "0.3.0"
-regex-syntax      = "0.4.1"
+proptest = "0.3.1"
+bit-set  = "0.4.0"

@@ -10,9 +10,10 @@ macro_rules! impl_array {
         $(
             impl<'a, A: Arbitrary<'a>> Arbitrary<'a> for [A; $n] {
                 valuetree!();
+                type Parameters = A::Parameters;
                 type Strategy = [A::Strategy; $n];
-                fn arbitrary() -> Self::Strategy {
-                    any::<[A; $n]>()
+                fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
+                    any_with::<[A; $n], _>(args)
                 }
             }
         )*

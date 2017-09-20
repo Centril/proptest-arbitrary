@@ -8,9 +8,12 @@ macro_rules! impl_tuple {
     ($($typ: ident),*) => {
         impl<'a, $($typ : Arbitrary<'a>),*> Arbitrary<'a> for ($($typ,)*) {
             valuetree!();
+            type Parameters = ($($typ::Parameters,)*);
             type Strategy = ($($typ::Strategy,)*);
-            fn arbitrary() -> Self::Strategy {
-                ($(any::<$typ>()),*,)
+            fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
+                #[allow(non_snake_case)]
+                let ($($typ),*,) = args;
+                ($(any_with::<$typ, _>($typ)),*,)
             }
         }
     };
