@@ -5,6 +5,39 @@
 use super::*;
 use proptest::option::{self, OptionStrategy};
 
+/// A probability in the range [0.0, 1.0].
+#[derive(Clone, PartialEq, Debug)]
+pub struct Probability(f64);
+
+impl From<f64> for Probability {
+    fn from(x: f64) -> Self {
+        Probability(x)
+    }
+}
+
+impl Default for Probability {
+    fn default() -> Self {
+        0.5.into()
+    }
+}
+
+params_unary!(OptionParams);
+
+impl<'a, A: Arbitrary<'a>> Arbitrary<'a> for Option<A> {
+    valuetree!();
+    type Parameters = OptionParams<A::Parameters, Probability>;
+    type Strategy = OptionStrategy<A::Strategy>;
+
+    fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
+        option::weighted(args.aux.0, arbitrary_with(args.a_params))
+    }
+}
+
+
+
+/*
+
+
 /// Parameters for configuring the generation of `StrategyFor<Option<A>>`.
 #[derive(Clone, Copy, PartialEq, PartialOrd, Debug)]
 pub struct OptionParams<A> {
@@ -45,12 +78,4 @@ impl<AF, A: From<AF>> From<(f64, AF)> for OptionParams<A> {
     }
 }
 
-impl<'a, A: Arbitrary<'a>> Arbitrary<'a> for Option<A> {
-    valuetree!();
-    type Parameters = OptionParams<A::Parameters>;
-    type Strategy = OptionStrategy<A::Strategy>;
-
-    fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
-        option::weighted(args.probability_of_some, arbitrary_with(args.a_params))
-    }
-}
+*/

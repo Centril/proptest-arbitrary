@@ -496,7 +496,7 @@ mod primitives;
 pub mod option;
 pub mod result;
 mod from_mapper;
-pub mod collections;
+//pub mod collections;
 pub mod bits;
 mod string;
 mod arrays;

@@ -22,12 +22,7 @@ use from_mapper::{static_map, FnPtrMap, W};
 
 // TODO: Refactor with OptionParams + ResultParams.
 
-/// Parameters for configuring the generation of `StrategyFor<...<A>>`.
-#[derive(Clone, PartialEq, Eq, Hash, Debug)]
-pub struct UnaryRangedParams<A> {
-    range: Range<usize>,
-    a_params: A,
-}
+params_unary!(UnaryRangedParams, Range<usize>, 0..100);
 
 /// Parameters for configuring the generation of `StrategyFor<...<A, B>>`.
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
@@ -35,39 +30,6 @@ pub struct BinaryRangedParams<A, B> {
     range: Range<usize>,
     a_params: A,
     b_params: B,
-}
-
-impl<A: Default> Default for UnaryRangedParams<A> {
-    fn default() -> Self {
-        (def(),).into()
-    }
-}
-
-impl<A: Default> From<()> for UnaryRangedParams<A> {
-    fn from(_: ()) -> Self {
-        Self::default()
-    }
-}
-
-impl<A: Default> From<Range<usize>> for UnaryRangedParams<A> {
-    fn from(x: Range<usize>) -> Self {
-        (x, def()).into()
-    }
-}
-
-impl<AF, A: From<AF>> From<(AF,)> for UnaryRangedParams<A> {
-    fn from(x: (AF,)) -> Self {
-        (0..100, x.0).into()
-    }
-}
-
-impl<AF, A: From<AF>> From<(Range<usize>, AF)> for UnaryRangedParams<A> {
-    fn from(x: (Range<usize>, AF)) -> Self {
-        Self {
-            range: x.0,
-            a_params: x.1.into(),
-        }
-    }
 }
 
 impl<A: Default, B: Default> From<()> for BinaryRangedParams<A, B> {
@@ -123,7 +85,7 @@ macro_rules! impl_unary {
             type Parameters = UnaryRangedParams<A::Parameters>;
             type Strategy = $strat<A::Strategy>;
             fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
-                $fun(arbitrary_with(args.a_params), args.range)
+                $fun(arbitrary_with(args.a_params), args.aux)
             }
         }
     };
