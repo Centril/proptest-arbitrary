@@ -508,3 +508,6 @@ mod tuples;
 
 // TODO: copy the structure of libstd so everything becomes clearer.
 // This will bloat the number of modules somewhat, but that's OK.
+
+// TODO: Relative likelyhood of union (optionally) based on a function:
+// (lexical_pos: usize) -> likelyhood: usize.
