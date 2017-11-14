@@ -36,83 +36,19 @@ impl From<bool> for ResultBias {
 }
 
 /// Parameters for configuring the generation of `StrategyFor<Result<A, B>>`.
-#[derive(Clone, Copy, PartialEq, PartialOrd, Debug)]
-pub struct ResultParams<A, B> {
-    probability: f64,
-    bias: ResultBias,
-    a_params: A,
-    b_params: B,
-}
+pub type ResultParams<A, B> = Hlist![Probability, ResultBias, A, B];
 
-impl<A: Default, B: Default> Default for ResultParams<A, B> {
-    fn default() -> Self {
-        0.5.into()
-    }
-}
+impl<'a, A: Arbitrary<'a>, B: Arbitrary<'a>> Arbitrary<'a> for Result<A, B> {
+    valuetree!();
+    type Parameters = ResultParams<A::Parameters, B::Parameters>;
+    type Strategy = ResultStrategy<A::Strategy, B::Strategy>;
 
-impl<A: Default, B: Default> From<()> for ResultParams<A, B> {
-    fn from(_: ()) -> Self {
-        Self::default()
-    }
-}
-
-impl<A: Default, B: Default> From<f64> for ResultParams<A, B> {
-    fn from(x: f64) -> Self {
-        (x, def::<ResultBias>()).into()
-    }
-}
-
-impl<AF, A: From<AF>, B: Default> From<(AF,)> for ResultParams<A, B> {
-    fn from(x: (AF,)) -> Self {
-        (0.5, def::<ResultBias>(), x.0).into()
-    }
-}
-
-impl<RB, A, B> From<RB> for ResultParams<A, B>
-where
-    ResultBias: From<RB>,
-    A: Default,
-    B: Default,
-{
-    fn from(x: RB) -> Self {
-        (0.5, x).into()
-    }
-}
-
-impl<RB, A, B> From<(f64, RB)> for ResultParams<A, B>
-where
-    ResultBias: From<RB>,
-    B: Default,
-    A: Default,
-{
-    fn from(x: (f64, RB)) -> Self {
-        (x.0, x.1, def()).into()
-    }
-}
-
-impl<RB, AF, A, B> From<(f64, RB, AF)> for ResultParams<A, B>
-where
-    ResultBias: From<RB>,
-    A: From<AF>,
-    B: Default,
-{
-    fn from(x: (f64, RB, AF)) -> Self {
-        (x.0, x.1, x.2, def()).into()
-    }
-}
-
-impl<RB, AF, A, BF, B> From<(f64, RB, AF, BF)> for ResultParams<A, B>
-where
-    ResultBias: From<RB>,
-    A: From<AF>,
-    B: From<BF>,
-{
-    fn from(x: (f64, RB, AF, BF)) -> Self {
-        ResultParams {
-            probability: x.0,
-            bias: x.1.into(),
-            a_params: x.2.into(),
-            b_params: x.3.into(),
+    fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
+        let hlist_pat![prob, bias, a, b] = args;
+        let (p, aa, ab) = (prob.into(), arbitrary_with(a), arbitrary_with(b));
+        match bias {
+            ResultBias::Ok => SOk(result::maybe_ok_weighted(p, aa, ab)),
+            ResultBias::Err => SErr(result::maybe_err_weighted(p, aa, ab)),
         }
     }
 }
@@ -166,26 +102,5 @@ impl<A: Strategy, B: Strategy> Strategy for ResultStrategy<A, B> {
             SOk(ref s) => VOk(s.new_value(runner)?),
             SErr(ref s) => VErr(s.new_value(runner)?),
         })
-    }
-}
-
-impl<'a, A: Arbitrary<'a>, B: Arbitrary<'a>> Arbitrary<'a> for Result<A, B> {
-    valuetree!();
-    type Parameters = ResultParams<A::Parameters, B::Parameters>;
-    type Strategy = ResultStrategy<A::Strategy, B::Strategy>;
-
-    fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
-        match args.bias {
-            ResultBias::Ok => SOk(result::maybe_ok_weighted(
-                args.probability,
-                arbitrary_with(args.a_params),
-                arbitrary_with(args.b_params),
-            )),
-            ResultBias::Err => SErr(result::maybe_err_weighted(
-                args.probability,
-                arbitrary_with(args.a_params),
-                arbitrary_with(args.b_params),
-            )),
-        }
     }
 }

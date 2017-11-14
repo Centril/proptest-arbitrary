@@ -1,6 +1,4 @@
-//==============================================================================
-// Bits:
-//==============================================================================
+//! Arbitrary implementations for integral types as bit patterns.
 
 use std::mem;
 use std::ops::Range;
@@ -48,7 +46,7 @@ impl<A: AllOnes + BitSetLike> Default for BitsParams<A> {
 }
 
 impl Default for BitsParams<BitSet> {
-    /// Uses a range 0..sizeof(usize)^2.
+    /// Uses a range: `0 .. sizeof(usize)^2`.
     fn default() -> Self {
         Ranged(0..(mem::size_of::<usize>() * 8).pow(2))
     }
@@ -66,16 +64,20 @@ impl<A> From<Range<usize>> for BitsParams<A> {
     }
 }
 
-/// Bits is a simple newtype for treating the generic type parameter `T` as
-/// a set of bits for the purposes of production of arbitrary values.
-#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-pub struct Bits<T: BitSetLike>(T);
-
-impl<T: BitSetLike> From<T> for Bits<T> {
-    fn from(x: T) -> Self {
-        Bits(x)
+impl<T: BitSetLike> Bits<T> {
+    /// Wraps an integral type into `Bits` which views it as a bit pattern.
+    pub fn new(t: T) -> Self {
+        t.into()
     }
 }
+
+/// Bits is a simple newtype for treating the generic type parameter `T` as
+/// a set of bits for the purposes of production of arbitrary values.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug,
+         Generic, From,
+         Not, Neg, BitAnd, BitOr, BitXor,
+         Add, Sub, AddAssign, SubAssign, Mul, Div, Rem, Shr, Shl)]
+pub struct Bits<T: BitSetLike>(T);
 
 macro_rules! impl_bits {
     ($($typ: ty),*) => {

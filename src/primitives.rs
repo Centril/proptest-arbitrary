@@ -1,3 +1,5 @@
+//! Arbitrary implementations for primitive types.
+
 //==============================================================================
 // Primitive types:
 //==============================================================================
@@ -13,6 +15,38 @@ impls! {
     u8, u16, u32, u64, usize
 }
 
+//==============================================================================
+// Primitive types, char:
+//==============================================================================
 
-// TODO: handle this better w.r.t. ParamsType.
-impl_arbitrary!(char, char::CharStrategy<'a>, char::ANY);
+use std::borrow::Cow;
+
+/// An inclusive char range from fst to snd.
+/// TODO: replace with `std::ops::RangeInclusive<char>` once stabilized.
+type CharRange = (char, char);
+type CowSlices<'a, T> = Cow<'a, [T]>;
+
+const WHOLE_RANGE: &[CharRange] = &[('\x00', ::std::char::MAX)];
+
+/// Equivalent to `proptest::char::ANY`.
+impl<'a> Default for CharParameters<'a> {
+    fn default() -> Self {
+        Self {
+            special: Cow::Borrowed(char::DEFAULT_SPECIAL_CHARS),
+            preferred: Cow::Borrowed(char::DEFAULT_PREFERRED_RANGES),
+            ranges: Cow::Borrowed(WHOLE_RANGE),
+        }
+    }
+}
+
+/// Parameters to pass to `proptest::char::CharStrategy::new(..)`.
+#[derive(Clone, PartialEq, Eq, Hash, Debug, Generic, From, Into)]
+pub struct CharParameters<'a> {
+    special: CowSlices<'a, char>,
+    preferred: CowSlices<'a, CharRange>,
+    ranges: CowSlices<'a, CharRange>,
+}
+
+arbitrary_for!(char [] [char::CharStrategy<'a>] [CharParameters<'a>], args => {
+    char::CharStrategy::new(args.special, args.preferred, args.ranges)
+});

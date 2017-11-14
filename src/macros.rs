@@ -31,46 +31,29 @@ macro_rules! impls {
     };
 }
 
-macro_rules! params_unary {
-    ($type: ident) => {
-        /// Parameters for configuring the generation of `StrategyFor<...<A>>`.
-        #[derive(Clone, PartialEq, Debug)]
-        pub struct $type<A, B> {
-            aux: B,
-            a_params: A,
-        }
-
-        impl<A: Default, B: Default> Default for $type<A, B> {
-            fn default() -> Self {
-                (def(),).into()
+macro_rules! impl_wrap_gen {
+    ($wrap: ident $(,$bound : path)*) => {
+        impl<'a, A: $crate::Arbitrary<'a> $(+ $bound)*> $crate::Arbitrary<'a>
+        for $wrap<A> {
+            valuetree!();
+            type Parameters = A::Parameters;
+            type Strategy = $crate::from_mapper::Mapped<'a, A, Self>;
+            fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
+                $crate::any_with::<A, _>(args).prop_map($wrap::new)
             }
         }
+    };
+}
 
-        // No info => Default:
-        impl<A: Default, B: Default> From<()> for $type<A, B> {
-            fn from(_: ()) -> Self {
-                Self::default()
-            }
-        }
-
-        impl<A: Default, X: From<XF>, XF> From<XF> for $type<A, X> {
-            fn from(x: XF) -> Self {
-                (x, def()).into()
-            }
-        }
-
-        impl<AF, A: From<AF>, X: Default> From<(AF,)> for $type<A, X> {
-            fn from(x: (AF,)) -> Self {
-                (def::<X>(), x.0).into()
-            }
-        }
-
-        impl<AF, A: From<AF>, XF, X: From<XF>> From<(XF, AF)> for $type<A, X> {
-            fn from(x: (XF, AF)) -> Self {
-                Self {
-                    aux: x.0.into(),
-                    a_params: x.1.into(),
-                }
+macro_rules! arbitrary_for {
+    ($typ: ty [$($bound : tt)*] [$strat: ty] [$params: ty],
+        $args: ident => $logic: block) => {
+        impl<'a, $($bound)*> Arbitrary<'a> for $typ {
+            valuetree!();
+            type Parameters = $params;
+            type Strategy = $strat;
+            fn arbitrary_with($args: Self::Parameters) -> Self::Strategy {
+                $logic
             }
         }
     };

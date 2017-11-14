@@ -1,3 +1,4 @@
+//! Arbitrary implementations for arrays.
 
 //==============================================================================
 // Arrays:
@@ -5,18 +6,44 @@
 
 use super::*;
 
-// TODO: Consider allowing the user to pass a function which either mutates or
-// accumulates the inner parameters for [0 -> N] in the strategy array.
+/// A function taking `ParamsFor<A>` and transforming it. Allows
+/// callers of `arbitrary_with` for arrays to mutate the parameters for each
+/// element.
+#[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug,
+         From)]
+pub struct ArrayParamMod<A: Clone>(fn(usize, A) -> A);
+
+impl<A: Clone> Default for ArrayParamMod<A> {
+    fn default() -> Self {
+        fn identity<A>(_: usize, x: A) -> A { x }
+        ArrayParamMod(identity)
+    }
+}
+
+type ArrayParams<A> = Hlist![A, ArrayParamMod<A>];
+
+use init_with::InitWith;
+use std::mem;
 
 macro_rules! impl_array {
     ($($n: expr),*) => {
         $(
-            impl<'a, A: Arbitrary<'a>> Arbitrary<'a> for [A; $n] {
+            impl<'a, A: Arbitrary<'a>> Arbitrary<'a> for [A; $n]
+            where
+                ParamsType<'a, A>: Clone
+            {
                 valuetree!();
-                type Parameters = A::Parameters;
+                type Parameters = ArrayParams<A::Parameters>;
                 type Strategy = [A::Strategy; $n];
                 fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
-                    any_with::<[A; $n], _>(args)
+                    let hlist_pat![mut curr, apm] = args;
+                    let mut i = 0;
+                    <[A::Strategy; $n]>::init_with(|| {
+                        let next = (apm.0)(i, curr.clone());
+                        let new  = mem::replace(&mut curr, next);
+                        i += 1;
+                        any_with::<A, _>(new)
+                    })
                 }
             }
         )*
@@ -54,5 +81,6 @@ impl_array!(
     28,
     29,
     30,
-    31
+    31,
+    32
 );

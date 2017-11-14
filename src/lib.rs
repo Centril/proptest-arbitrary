@@ -12,10 +12,10 @@
 //! Proptest is a property testing framework (i.e., the [`QuickCheck`] family)
 //! inspired by the [Hypothesis](http://hypothesis.works/) framework for
 //! Python. This crate, `proptest-arbitrary`, additionally provides an
-//! [Arbitrary] trait which allows you to have a canonical [Strategy] per type.
-//! This is the equivalent of [Haskell QuickCheck's implementation of Arbitrary].
-//! In this interpretation of Arbitrary, Strategy is the equivalent of the Gen
-//! monad.
+//! [`Arbitrary`] trait which allows you to have a canonical [`Strategy`]
+//! per type. This is the equivalent of [Haskell QuickCheck's implementation
+//! of `Arbitrary`]. In this interpretation of `Arbitrary`, `Strategy` is the
+//! equivalent of the `Gen` monad.
 //!
 //! Arbitrary is currently implemented as:
 //!
@@ -30,32 +30,34 @@
 //! pub trait Arbitrary<'a> : Sized + Debug {
 //!    /// Generates a Strategy for producing arbitrary values of type the
 //!    /// implementing type (Self) [..]
-//!    fn arbitrary() -> Self::Strategy {
+//!    fn arbitrary() -> Self::Strategy
+//!    where
+//!        Self::Parameters: Default
+//!    {
 //!        Self::arbitrary_with(Default::default())
 //!    }
 //!
-//!    /// Generates a Strategy for producing arbitrary values of type the
-//!    /// implementing type (Self). The strategy is passed the arguments given
-//!    /// in args [..].
+//!    /// Generates a `Strategy` for producing arbitrary values of type the
+//!    /// implementing type (`Self`). The strategy is passed the arguments
+//!    /// given in args [..].
 //!    fn arbitrary_with(args: Self::Parameters) -> Self::Strategy;
 //!
-//!    /// The type of parameters that arbitrary_with accepts for configuration
-//!    /// of the generated Strategy. There must always be a Default way to
-//!    /// construct arguments for the parameters [..]
-//!    type Parameters: Default;
+//!    /// The type of parameters that arbitrary_with accepts
+//!    /// for configuration of the generated `Strategy`.
+//!    type Parameters;
 //!
-//!     /// The type of ValueTree used for Self's Strategy.
+//!     /// The type of `ValueTree` used for `Self`'s `Strategy`.
 //!     ///
 //!     /// NOTE:
-//!     /// This type should NOT be relied upon outside of this crate other than
-//!     /// for implementing Arbitrary for other types.
+//!     /// This type should NOT be relied upon outside of this crate
+//!     /// other than for implementing `Arbitrary` for other types.
 //!     type ValueTree: ValueTree<Value = Self>;
 //!
-//!     /// The type of Strategy used to generate values of type Self.
+//!     /// The type of `Strategy` used to generate values of type `Self`.
 //!     ///
 //!     /// NOTE:
-//!     /// This type should NOT be relied upon outside of this crate other than
-//!     /// for implementing Arbitrary for other types.
+//!     /// This type should NOT be relied upon outside of this crate
+//!     /// other than for implementing `Arbitrary` for other types.
 //!     type Strategy: Strategy<Value = Self::ValueTree>;
 //! }
 //!
@@ -85,18 +87,39 @@
 //! [changelog]:
 //! https://github.com/Centril/proptest-arbitrary/blob/master/CHANGELOG.md
 //!
-//! [Arbitrary]: trait.Arbitrary.html
+//! [`Arbitrary`]: trait.Arbitrary.html
 //!
-//! [Strategy]:
+//! [`Strategy`]:
 //! https://docs.rs/proptest/0.3.0/proptest/strategy/trait.Strategy.html
 //!
 //! [existential types]: https://github.com/rust-lang/rfcs/pull/2071
 //!
-//! [Haskell QuickCheck's implementation of Arbitrary]:
+//! [Haskell QuickCheck's implementation of `Arbitrary`]:
 //! https://hackage.haskell.org/package/QuickCheck/docs/Test-QuickCheck-Arbitrary.html
 //!
 //! [`QuickCheck`]:
 //! https://hackage.haskell.org/package/QuickCheck
+
+
+#![feature(try_from, decode_utf8)]
+
+
+
+
+
+
+#![deny(missing_docs)]
+
+#[macro_use]
+extern crate derive_more;
+
+#[macro_use]
+extern crate frunk_derives;
+
+#[macro_use]
+extern crate frunk_core; 
+
+extern crate init_with;
 
 #[macro_use]
 extern crate proptest;
@@ -111,45 +134,53 @@ use proptest::strategy::{BoxedStrategy, Strategy, ValueTree};
 // Arbitrary trait + auxilary functions:
 //==============================================================================
 
-/// Arbitrary determines a canonical [Strategy] for the implementing type.
+/// Arbitrary determines a canonical [`Strategy`] for the implementing type.
 ///
-/// It provides the function arbitrary which generates a Strategy for
-/// producing arbitrary values of the implementing type *(Self)*.
+/// It provides the function arbitrary which generates a `Strategy` for
+/// producing arbitrary values of the implementing type *(`Self`)*.
 ///
 /// This trait is the equivalent of
-/// [Haskell QuickCheck's implementation of Arbitrary].
-/// In this interpretation of Arbitray, Strategy is the equivalent of the Gen
-/// monad.
+/// [Haskell QuickCheck's implementation of `Arbitrary`].
+/// In this interpretation of `Arbitray`, `Strategy` is the equivalent of
+/// the `Gen` monad.
 ///
-/// [Strategy]: ../proptest/strategy/trait.Strategy.html
+/// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
 ///
-/// [Haskell QuickCheck's implementation of Arbitrary]:
+/// [Haskell QuickCheck's implementation of `Arbitrary`]:
 /// https://hackage.haskell.org/package/QuickCheck/docs/Test-QuickCheck-Arbitrary.html
 pub trait Arbitrary<'a>: Sized + Debug {
     // Unfortunately, Generic Associated Types won't be in stable for some time.
     // Tracking issue: https://github.com/rust-lang/rust/issues/44265
 
-    /// Generates a [Strategy] for producing arbitrary values of type the
-    /// implementing type (Self).
+    /// Generates a [`Strategy`] for producing arbitrary values
+    /// of type the implementing type (`Self`).
     ///
     /// Calling this for the type `X` is the equivalent of using
-    /// [`X::arbitrary_with(Default::default())`].
+    /// [`X::arbitrary_with(Default::default())`]. This of course
+    /// requires that `Self::Parameters` implements [`Default`].
     ///
-    /// [Strategy]: ../proptest/strategy/trait.Strategy.html
-    ///
+    /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
+
     /// [`X::arbitrary_with(Default::default())`]:
     ///     trait.Arbitrary.html#tymethod.arbitrary_with
-    fn arbitrary() -> Self::Strategy {
+    ///
+    /// [`Default`]:
+    ///     https://doc.rust-lang.org/nightly/std/default/trait.Default.html
+    fn arbitrary() -> Self::Strategy
+    where
+        Self::Parameters: Default,
+    {
         Self::arbitrary_with(Default::default())
     }
 
-    /// Generates a [Strategy] for producing arbitrary values of type the
-    /// implementing type (Self). The strategy is passed the arguments given
+    /// Generates a [`Strategy`] for producing arbitrary values of type the
+    /// implementing type (`Self`). The strategy is passed the arguments given
     /// in args.
     ///
-    /// If you wish to use the [`default()`], use [`arbitrary`] instead.
+    /// If you wish to use the [`default()`] arguments,
+    /// use [`arbitrary`] instead.
     ///
-    /// [Strategy]: ../proptest/strategy/trait.Strategy.html
+    /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
     ///
     /// [`arbitrary`]: trait.Arbitrary.html#method.arbitrary
     ///
@@ -158,112 +189,104 @@ pub trait Arbitrary<'a>: Sized + Debug {
     fn arbitrary_with(args: Self::Parameters) -> Self::Strategy;
 
     /// The type of parameters that [`arbitrary_with`] accepts for configuration
-    /// of the generated [Strategy]. There must always be a [Default] way to
-    /// construct arguments for the parameters.
+    /// of the generated [`Strategy`].
     ///
     /// [`arbitrary_with`]: trait.Arbitrary.html#tymethod.arbitrary_with
     ///
-    /// [Strategy]: ../proptest/strategy/trait.Strategy.html
-    ///
-    /// [`default()`]:
-    ///     https://doc.rust-lang.org/nightly/std/default/trait.Default.html
-    ///
-    /// [Default]:
-    ///     https://doc.rust-lang.org/nightly/std/default/trait.Default.html
-    type Parameters: Default;
+    /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
+    type Parameters;
 
-    /// The type of [ValueTree] used for Self's [Strategy].
+    /// The type of [`ValueTree`] used for `Self`'s [`Strategy`].
     ///
     /// **NOTE:**
-    /// This type should **NOT** be relied upon outside of this crate other than
-    /// for implementing Arbitrary for other types.
+    /// This type should **NOT** be relied upon outside of this
+    /// crate other than for implementing `Arbitrary` for other types.
     ///
-    /// [ValueTree]: ../proptest/strategy/trait.ValueTree.html
-    /// [Strategy]: ../proptest/strategy/trait.Strategy.html
+    /// [`ValueTree`]: ../proptest/strategy/trait.ValueTree.html
+    /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
     type ValueTree: ValueTree<Value = Self>;
 
-    /// The type of [Strategy] used to generate values of type Self.
+    /// The type of [`Strategy`] used to generate values of type `Self`.
     ///
     /// **NOTE:**
-    /// This type should **NOT** be relied upon outside of this crate other than
-    /// for implementing Arbitrary for other types.
+    /// This type should **NOT** be relied upon outside of this crate
+    /// other than for implementing `Arbitrary` for other types.
     ///
-    /// [Strategy]: ../proptest/strategy/trait.Strategy.html
+    /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
     type Strategy: Strategy<Value = Self::ValueTree>;
 }
 
-/// `StrategyFor` allows you to mention the type of [Strategy] for the input
+/// `StrategyFor` allows you to mention the type of [`Strategy`] for the input
 /// type `A` without directly using associated types or without resorting to
-/// existential types. This way, if implementation of [Arbitrary] changes, your
-/// tests should not break. This can be especially beneficial when the type of
-/// Strategy that you are dealing with is very long in name
-/// (the case with generics). Additionally, if you have a custom Strategy type,
-/// or use a Strategy type with generics in it where you've provided a custom
-/// type for the type parameter, you need not export your type if `A` is
-/// Arbitrary as the Strategy type is still reachable from `StrategyFor`.
+/// existential types. This way, if implementation of [`Arbitrary`] changes,
+/// your tests should not break. This can be especially beneficial when the
+/// type of `Strategy` that you are dealing with is very long in name
+/// (the case with generics). Additionally, if you have a custom `Strategy`
+/// type, or use a `Strategy` type with generics in it where you've provided a
+/// custom type for the type parameter, you need not export your type if `A`
+/// is `Arbitrary` as the `Strategy` type is still reachable from `StrategyFor`.
 ///
-/// This is the same as [StrategyType<'static, A>].
+/// This is the same as [`StrategyType<'static, A>`].
 ///
-/// [Arbitrary]: trait.Arbitrary.html
-/// [StrategyType<'static, A>]: type.StrategyType.html
-/// [Strategy]: ../proptest/strategy/trait.Strategy.html
+/// [`Arbitrary`]: trait.Arbitrary.html
+/// [`StrategyType<'static, A>`]: type.StrategyType.html
+/// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
 pub type StrategyFor<A> = StrategyType<'static, A>;
 
-/// `StrategyType` allows you to mention the type of [Strategy] for the input
-/// type `A` without directly using associated types or without resorting to
-/// existential types. This way, if implementation of [Arbitrary] changes, your
-/// tests should not break. This can be especially beneficial when the type of
-/// Strategy that you are dealing with is very long in name
-/// (the case with generics). Additionally, if you have a custom Strategy type,
-/// or use a Strategy type with generics in it where you've provided a custom
-/// type for the type parameter, you need not export your type if `A` is
-/// Arbitrary as the Strategy type is still reachable from `StrategyType`.
+/// `StrategyType` allows you to mention the type of [`Strategy`] for the
+/// input type `A` without directly using associated types or without resorting
+/// to existential types. This way, if implementation of [`Arbitrary`] changes,
+/// your tests should not break. This can be especially beneficial when the
+/// type of `Strategy` that you are dealing with is very long in name
+/// (the case with generics). Additionally, if you have a custom `Strategy`
+/// type, or use a `Strategy` type with generics in it where you've provided
+/// a custom type for the type parameter, you need not export your type if `A`
+/// is `Arbitrary` as the `Strategy` type is still reachable from `StrategyType`.
 ///
 /// Unless the strategy uses lifetimes in the type, you most likely want
-/// [StrategyFor\<A\>] instead.
+/// [`StrategyFor<A>`] instead.
 ///
-/// [Arbitrary]: trait.Arbitrary.html
-/// [StrategyFor\<A\>]: type.StrategyFor.html
-/// [Strategy]: ../proptest/strategy/trait.Strategy.html
+/// [`Arbitrary`]: trait.Arbitrary.html
+/// [`StrategyFor<A>`]: type.StrategyFor.html
+/// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
 pub type StrategyType<'a, A> = <A as Arbitrary<'a>>::Strategy;
 
-
-/// `ParamsFor` allows you to mention the type of [Parameters] for the input
+/// `ParamsFor` allows you to mention the type of [`Parameters`] for the input
 /// type `A` without directly using associated types or without resorting to
-/// existential types. This way, if implementation of [Arbitrary] changes, your
-/// tests should not break. Additionally, if you have a custom
+/// existential types. This way, if implementation of [`Arbitrary`] changes,
+/// your tests should not break. Additionally, if you have a custom
 /// `Arbitrary::Parameters` type, or use a `Arbitrary::Parameters` type with
 /// generics in it where you've provided a custom type for the type parameter,
-/// you need not export your type if `A` is Arbitrary as the Parameters type is
-/// still reachable from `ParamsFor`.
+/// you need not export your type if `A` is `Arbitrary` as the `Parameters`
+/// type is still reachable from `ParamsFor`.
 ///
-/// This is the same as [ParamsType<'static, A>].
+/// This is the same as [`ParamsType<'static, A>`].
 ///
-/// [Parameters]: trait.Arbitrary.html#associatedtype.Parameters
-/// [Arbitrary]: trait.Arbitrary.html
-/// [ParamsType<'static, A>]: type.StrategyType.html
-/// [Strategy]: ../proptest/strategy/trait.Strategy.html
+/// [`Parameters`]: trait.Arbitrary.html#associatedtype.Parameters
+/// [`Arbitrary`]: trait.Arbitrary.html
+/// [`ParamsType<'static, A>`]: type.StrategyType.html
+/// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
 pub type ParamsFor<A> = ParamsType<'static, A>;
 
-/// `ParamsType` allows you to mention the type of [Parameters] for the input
+/// `ParamsType` allows you to mention the type of [`Parameters`] for the input
 /// type `A` without directly using associated types or without resorting to
-/// existential types. This way, if implementation of [Arbitrary] changes, your
-/// tests should not break. Additionally, if you have a custom
+/// existential types. This way, if implementation of [`Arbitrary`] changes,
+/// your tests should not break. Additionally, if you have a custom
 /// `Arbitrary::Parameters` type, or use a `Arbitrary::Parameters` type with
 /// generics in it where you've provided a custom type for the type parameter,
-/// you need not export your type if `A` is Arbitrary as the Parameters type is
-/// still reachable from `ParamsType`.
+/// you need not export your type if `A` is `Arbitrary` as the `Parameters`
+/// type is still reachable from `ParamsType`.
 ///
 /// Unless the strategy uses lifetimes in the type, you most likely want
-/// [ParamsFor\<A\>] instead.
+/// [`ParamsFor<A>`] instead.
 ///
-/// [Parameters]: trait.Arbitrary.html#associatedtype.Parameters
-/// [Arbitrary]: trait.Arbitrary.html
-/// [ParamsFor\<A\>]: type.ParamsFor.html
-/// [Strategy]: ../proptest/strategy/trait.Strategy.html
+/// [`Parameters`]: trait.Arbitrary.html#associatedtype.Parameters
+/// [`Arbitrary`]: trait.Arbitrary.html
+/// [`ParamsFor<A>`]: type.ParamsFor.html
+/// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
 pub type ParamsType<'a, A> = <A as Arbitrary<'a>>::Parameters;
 
-/// Generates a [Strategy] producing [Arbitrary] values of `A`.
+/// Generates a [`Strategy`] producing [`Arbitrary`] values of `A`.
 /// Works better with type inference than [`any::<A>()`].
 ///
 /// With this version, you shouldn't need to specify any of the (many) type
@@ -292,8 +315,8 @@ pub type ParamsType<'a, A> = <A as Arbitrary<'a>>::Parameters;
 ///
 /// [`arbitrary_with(args)`]: fn.arbitrary_with.html
 /// [`any::<A>()`]: fn.any.html
-/// [Arbitrary]: trait.Arbitrary.html
-/// [Strategy]: ../proptest/strategy/trait.Strategy.html
+/// [`Arbitrary`]: trait.Arbitrary.html
+/// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
 pub fn arbitrary<'a, A, S, V, P>() -> S
 where
     P: Default,
@@ -304,7 +327,7 @@ where
     A::arbitrary()
 }
 
-/// Generates a [Strategy] producing [Arbitrary] values of `A` with the
+/// Generates a [`Strategy`] producing [`Arbitrary`] values of `A` with the
 /// given configuration arguments passed in `args`.
 /// Works better with type inference than [`any_with::<A, _>(args)`].
 ///
@@ -333,11 +356,11 @@ where
 ///
 /// [`any_with::<A, _>(args)`]: fn.any_with.html
 /// [`arbitrary()`]: fn.arbitrary.html
-/// [Arbitrary]: trait.Arbitrary.html
-/// [Strategy]: ../proptest/strategy/trait.Strategy.html
+/// [`Arbitrary`]: trait.Arbitrary.html
+/// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
 pub fn arbitrary_with<'a, PF, A, S, V, P>(args: PF) -> S
 where
-    P: Default + From<PF>,
+    P: From<PF>,
     V: ValueTree<Value = A>,
     S: Strategy<Value = V>,
     A: Arbitrary<'a, Strategy = S, ValueTree = V, Parameters = P>,
@@ -345,16 +368,16 @@ where
     A::arbitrary_with(args.into())
 }
 
-/// Generates a [Strategy] producing [Arbitrary] values of `A`.
+/// Generates a [`Strategy`] producing [`Arbitrary`] values of `A`.
 /// Unlike [`arbitrary`], it should be used for being explicit on what `A` is.
 ///
 /// Use this version instead of [`arbitrary`] if you want to be clear which
-/// type you want to generate a Strategy for, or if you don't have an anchoring
+/// type you want to generate a `Strategy` for, or if you don't have an anchoring
 /// type for type inference to work with.
 ///
 /// If you want to customize how the strategy is generated, use
 /// [`any_with::<A>(args)`] where `args` are any arguments accepted by
-/// the Arbitrary impl in question.
+/// the `Arbitrary` impl in question.
 ///
 /// # Example
 ///
@@ -373,18 +396,21 @@ where
 ///
 /// [`any_with::<A>(args)`]: fn.any_with.html
 /// [`arbitrary`]: fn.arbitrary.html
-/// [Arbitrary]: trait.Arbitrary.html
-/// [Strategy]: ../proptest/strategy/trait.Strategy.html
-pub fn any<'a, A: Arbitrary<'a>>() -> StrategyType<'a, A> {
+/// [`Arbitrary`]: trait.Arbitrary.html
+/// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
+pub fn any<'a, A: Arbitrary<'a>>() -> StrategyType<'a, A>
+where
+    ParamsType<'a, A>: Default
+{
     A::arbitrary()
 }
 
-/// Generates a [Strategy] producing [Arbitrary] values of `A` with the
+/// Generates a [`Strategy`] producing [`Arbitrary`] values of `A` with the
 /// given configuration arguments passed in `args`. Unlike [`arbitrary_with`],
 /// it should be used for being explicit on what `A` is.
 ///
 /// Use this version instead of [`arbitrary_with`] if you want to be clear which
-/// type you want to generate a Strategy for, or if you don't have an anchoring
+/// type you want to generate a `Strategy` for, or if you don't have an anchoring
 /// type for type inference to work with.
 ///
 /// If you don't want to specify any arguments and instead use the default
@@ -406,8 +432,8 @@ pub fn any<'a, A: Arbitrary<'a>>() -> StrategyType<'a, A> {
 /// ```
 /// [`any::<A>()`]: fn.any.html
 /// [`arbitrary_with`]: fn.arbitrary_with.html
-/// [Arbitrary]: trait.Arbitrary.html
-/// [Strategy]: ../proptest/strategy/trait.Strategy.html
+/// [`Arbitrary`]: trait.Arbitrary.html
+/// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
 pub fn any_with<'a, A, PF>(args: PF) -> StrategyType<'a, A>
 where
     A: Arbitrary<'a>,
@@ -416,12 +442,12 @@ where
     A::arbitrary_with(args.into())
 }
 
-/// Generates a [Strategy] producing [Arbitrary] values of `A`.
-/// This version boxes the Strategy, and thus you needn't specify `A`.
+/// Generates a [`Strategy`] producing [`Arbitrary`] values of `A`.
+/// This version boxes the `Strategy`, and thus you needn't specify `A`.
 ///
 /// If you want to customize how the strategy is generated, use
 /// [`box_any_with(args)`] where `args` are any arguments accepted by
-/// the Arbitrary impl in question.
+/// the `Arbitrary` impl in question.
 ///
 /// # Example
 ///
@@ -442,18 +468,19 @@ where
 /// ```
 ///
 /// [`box_any_with(args)`]: fn.box_any_with.html
-/// [Arbitrary]: trait.Arbitrary.html
-/// [Strategy]: ../proptest/strategy/trait.Strategy.html
+/// [`Arbitrary`]: trait.Arbitrary.html
+/// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
 pub fn box_any<A: Arbitrary<'static> + 'static>() -> BoxedStrategy<A>
 where
+    ParamsFor<A>: Default,
     StrategyFor<A>: 'static,
 {
     any::<A>().boxed()
 }
 
-/// Generates a [Strategy] producing [Arbitrary] values of `A` with the
+/// Generates a [`Strategy`] producing [`Arbitrary`] values of `A` with the
 /// given configuration arguments passed in `args`.
-/// This version boxes the Strategy, and thus you needn't specify `A`.
+/// This version boxes the `Strategy`, and thus you needn't specify `A`.
 ///
 /// If you don't want to specify any arguments and instead use the default
 /// behavior, you should use [`box_any::<A>()`].
@@ -477,29 +504,45 @@ where
 /// ```
 ///
 /// [`box_any::<A>()`]: fn.box_any.html
-/// [Arbitrary]: trait.Arbitrary.html
-/// [Strategy]: ../proptest/strategy/trait.Strategy.html
+/// [`Arbitrary`]: trait.Arbitrary.html
+/// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
 pub fn box_any_with<A, PF>(args: PF) -> BoxedStrategy<A>
 where
     A: Arbitrary<'static> + 'static,
     ParamsFor<A>: From<PF>,
     StrategyFor<A>: 'static,
 {
-    any_with::<A, _>(args.into()).boxed()
+    any_with::<A, _>(args).boxed()
 }
 
-mod utils;
-use utils::*;
+/// The end value used by functions under test that a [`Strategy`] produces via
+/// its [`ValueTree`]
+///
+/// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
+/// [`ValueTree`]: ../proptest/strategy/trait.ValueTree.html
+pub type ValueOf<S> = <<S as Strategy>::Value as ValueTree>::Value;
+
+//==============================================================================
+// Modules:
+//==============================================================================
+
 #[macro_use]
 mod macros;
-mod primitives;
-pub mod option;
-pub mod result;
 mod from_mapper;
-//pub mod collections;
+pub use from_mapper::{Mapped, SMapped};
+pub mod extras;
+
+pub mod params;
+use params::*;
+
+pub mod primitives;
 pub mod bits;
+
+pub mod _std;
+
 mod string;
-mod arrays;
+
+pub mod arrays;
 mod tuples;
 
 //==============================================================================

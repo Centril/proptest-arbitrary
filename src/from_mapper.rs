@@ -1,12 +1,40 @@
-//==============================================================================
-// FromMapper:
-//==============================================================================
-
 use std::marker::PhantomData;
 use std::fmt::Debug;
 
-use proptest::strategy::{Strategy, ValueTree};
-use proptest::strategy::statics::{Map, MapFn};
+use super::*;
+
+use proptest::strategy::{Strategy, Map};
+use proptest::strategy::statics::{
+    Map as SMap,
+    MapFn as SMapFn,
+    Filter as SFilter,
+    FilterFn as SFilterFn,
+};
+
+//==============================================================================
+// Static Filter:
+//==============================================================================
+
+#[derive(Clone, Copy)]
+pub struct StaticFilter<I>(fn(&I) -> bool);
+
+impl<I> SFilterFn<I> for StaticFilter<I> {
+    fn apply(&self, input: &I) -> bool {
+        (self.0)(input)
+    }
+}
+
+pub(crate) type FilterFnPtr<S> = SFilter<S, StaticFilter<ValueOf<S>>>;
+
+pub(crate) fn static_filter<S: Strategy, W: AsRef<str>>(
+    source: S, whence: W, filter: fn(&ValueOf<S>) -> bool
+) -> FilterFnPtr<S> {
+    SFilter::new(source, whence.as_ref().into(), StaticFilter(filter))
+}
+
+//==============================================================================
+// FromMapper:
+//==============================================================================
 
 /// Do **NOT** use this type directly. This is a private implementation detail
 /// that is unfortunately leaking, which might change in the future.
@@ -20,7 +48,7 @@ impl<I, O> Default for FromMapper<I, O> {
     }
 }
 
-impl<I, O: From<I> + Debug> MapFn<I> for FromMapper<I, O> {
+impl<I, O: From<I> + Debug> SMapFn<I> for FromMapper<I, O> {
     type Output = O;
 
     fn apply(&self, val: I) -> Self::Output {
@@ -28,41 +56,47 @@ impl<I, O: From<I> + Debug> MapFn<I> for FromMapper<I, O> {
     }
 }
 
-pub(crate) type FromMapStrategy<S, I, O> = Map<S, FromMapper<I, O>>;
+pub(crate) type FromMapStrategy<S, I, O> = SMap<S, FromMapper<I, O>>;
 
 //==============================================================================
 // FnMap + static_map:
 //==============================================================================
 
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug)]
-pub struct FnMap<I, O, F: Fn(I) -> O>(F, PhantomData<(I, O)>);
+pub struct SFnMap<I, O>(fn(I) -> O);
 
-impl<I, O, F> MapFn<I> for FnMap<I, O, F>
-where
-    O: Debug,
-    F: Fn(I) -> O,
-{
+impl<I, O: Debug> SMapFn<I> for SFnMap<I, O> {
     type Output = O;
-
-    fn apply(&self, x: I) -> Self::Output {
-        self.0(x)
-    }
+    fn apply(&self, x: I) -> Self::Output { self.0(x) }
 }
 
-pub(crate) type StaticMap<S, I, O, F> = Map<S, FnMap<I, O, F>>;
+pub(crate) type StaticMap<S, I, O> = SMap<S, SFnMap<I, O>>;
 
-pub(crate) type FnPtrMap<S, I, O> = Map<S, FnMap<I, O, fn(I) -> O>>;
+pub(crate) type SFnPtrMap<S, O> = SMap<S, SFnMap<ValueOf<S>, O>>;
 
-pub(crate) fn static_map<S, O, F>(
-    strat: S,
-    fun: F,
-) -> StaticMap<S, <S::Value as ValueTree>::Value, O, F>
+pub(crate) fn static_map<S, O>(strat: S, fun: fn(ValueOf<S>) -> O)
+    -> StaticMap<S, ValueOf<S>, O>
 where
     S: Strategy,
-    O: Debug,
-    F: Fn(<S::Value as ValueTree>::Value) -> O,
+    O: Debug
 {
-    StaticMap::new(strat, FnMap(fun, PhantomData))
+    StaticMap::new(strat, SFnMap(fun))
 }
+
+/// A static map from a strategy of `I` to `O`.
+pub type SMapped<'a, I, O> = SMap<StrategyType<'a, I>, SFnMap<I, O>>;
+
+//==============================================================================
+// FnMap + static_map:
+//==============================================================================
+
+pub(crate) type FnPtrMap<S, I, O> = Map<S, fn(I) -> O>;
+
+/// A map from a strategy of `I` to `O`.
+pub type Mapped<'a, I, O> = FnPtrMap<StrategyType<'a, I>, I, O>;
+
+//==============================================================================
+// W:
+//==============================================================================
 
 pub(crate) type W<T> = (u32, T);
