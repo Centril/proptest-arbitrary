@@ -26,6 +26,7 @@ mod env;
 mod ffi;
 
 /*
-pub mod option;
-pub mod result;
+TODO:
 */
+mod option;
+//pub mod result;

@@ -6,7 +6,7 @@ use super::*;
 use proptest::option::{self, OptionStrategy};
 
 /// Parameters for configuring the generation of `StrategyFor<Option<A>>`.
-pub type OptionParams<A> = Hlist![Probability, A];
+type OptionParams<A> = Hlist![Probability, A];
 
 impl<'a, A: Arbitrary<'a>> Arbitrary<'a> for Option<A> {
     valuetree!();
