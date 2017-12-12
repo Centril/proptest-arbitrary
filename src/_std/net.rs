@@ -3,10 +3,10 @@ use std::net::*;
 use std::net::Shutdown::*;
 use proptest::strategy::{Just, TupleUnion};
 
-impl_just!(AddrParseError, "".parse::<Ipv4Addr>().unwrap_err());
-
 // TODO: Can we design a workable semantic for PBT wrt. actual networking
 // connections?
+
+impl_just!(AddrParseError, "".parse::<Ipv4Addr>().unwrap_err());
 
 impl_arbitrary!(Ipv4Addr,
     TupleUnion<(

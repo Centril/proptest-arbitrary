@@ -3,6 +3,9 @@ use std::iter::*;
 use proptest::strategy::Just;
 use frunk_core::hlist::LiftInto;
 
+// TODO: Filter, FilterMap, FlatMap, Map, Inspect, Scan, SkipWhile
+// Might be possible with CoArbitrary
+
 impl_wrap_gen!([Iterator<Item = &'a T>, T: 'a + Clone] Cloned, Iterator::cloned);
 impl_wrap_gen!([Iterator + Clone] Cycle, Iterator::cycle);
 impl_wrap_gen!([Iterator] Enumerate, Iterator::enumerate);
@@ -46,6 +49,3 @@ macro_rules! usize_mod {
 usize_mod!(Skip, skip);
 usize_mod!(Take, take);
 usize_mod!(StepBy, step_by);
-
-// TODO: Filter, FilterMap, FlatMap, Map, Inspect, Scan, SkipWhile
-// Might be possible with CoArbitrary

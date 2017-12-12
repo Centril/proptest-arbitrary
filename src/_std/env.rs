@@ -84,8 +84,7 @@ impl_arbitrary!(VarError,
     ]
 );
 
-// TODO: SplitPaths when lifetimes in strategies are possible.
-
+// FIXME: SplitPaths when lifetimes in strategies are possible.
 
 #[cfg(test)]
 mod tests {

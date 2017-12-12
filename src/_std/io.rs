@@ -4,6 +4,9 @@ use std::io::ErrorKind::*;
 use frunk_core::hlist::LiftInto;
 use proptest::strategy::{Just, Union, TupleUnion};
 
+// TODO: IntoInnerError
+// Consider: std::io::Initializer
+
 arbitrary_for!(
     [A: Read + Arbitrary<'a>] BufReader<A>,
     SMapped<'a, (A, Option<u16>), Self>, A::Parameters,
@@ -39,8 +42,6 @@ gen_strat!(
     ; Stdin, stdin
     ; Stdout, stdout
 );
-// TODO: Error
-// TODO: IntoInnerError
 arbitrary_for!(
     [A: Write + Arbitrary<'a>] LineWriter<A>,
     SMapped<'a, (A, Option<u16>), Self>, A::Parameters,
@@ -65,7 +66,7 @@ arbitrary_for!(
     args => any_with_smap(args.lift_into(), |(a, b)| a.take(b))
 );
 impl_wrap_gen!([Read] Chars, Read::chars);
-// Consider: std::io::Initializer
+
 impl_arbitrary!(ErrorKind, Union<Just<Self>>,
     Union::new(
     [ NotFound

@@ -1,6 +1,8 @@
 use super::*;
 use std::fs::{DirBuilder};
 
+// TODO: other parts (figure out workable semantics).
+
 impl_arbitrary!(DirBuilder, SMapped<'a, bool, Self>, {
     static_map(any::<bool>(), |recursive| {
         let mut db = DirBuilder::new();
@@ -8,5 +10,3 @@ impl_arbitrary!(DirBuilder, SMapped<'a, bool, Self>, {
         db
     })
 });
-
-// TODO: other parts (figure out workable semantics).
