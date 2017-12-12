@@ -8,9 +8,10 @@ use proptest::option::{self, OptionStrategy};
 
 arbitrary_for!(
     [A: Arbitrary<'a>] Option<A>,
-    OptionStrategy<A::Strategy>, Hlist![Probability, A::Parameters],
+    OptionStrategy<A::Strategy>,
+    product_type![Probability, A::Parameters],
     args => {
-        let hlist_pat![prob, a] = args;
+        let product_unpack![prob, a] = args;
         option::weighted(prob.into(), any_with::<A>(a))
     }
 );

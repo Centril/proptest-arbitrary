@@ -1,7 +1,6 @@
 use super::*;
 use std::iter::*;
 use std::iter::Fuse;
-use frunk_core::hlist::LiftInto;
 
 // TODO: Filter, FilterMap, FlatMap, Map, Inspect, Scan, SkipWhile
 // Might be possible with CoArbitrary
@@ -21,7 +20,7 @@ arbitrary_for!(
     [A: Arbitrary<'a> + Iterator, B: Arbitrary<'a> + Iterator]
     Zip<A, B>,
     SMapped<'a, (A, B), Self>,
-    Hlist![A::Parameters, B::Parameters],
+    product_type![A::Parameters, B::Parameters],
     args => any_with_smap(args, |(a, b)| a.zip(b))
 );
 arbitrary_for!(
@@ -30,7 +29,7 @@ arbitrary_for!(
      B: Arbitrary<'a> + Iterator<Item = T>]
     Chain<A, B>,
     SMapped<'a, (A, B), Self>,
-    Hlist![A::Parameters, B::Parameters],
+    product_type![A::Parameters, B::Parameters],
     args => any_with_smap(args, |(a, b)| a.chain(b))
 );
 
@@ -41,7 +40,8 @@ macro_rules! usize_mod {
             $type<A>,
             SMapped<'a, (A, usize), Self>,
             A::Parameters,
-            args => any_with_smap(args.lift_into(), |(a, b)| a.$mapper(b))
+            args =>
+                any_with_smap(product_pack![args, ()], |(a, b)| a.$mapper(b))
         );
     };
 }

@@ -8,7 +8,6 @@ use std::iter;
 use std::slice;
 use std::rc::Rc;
 use std::sync::Arc;
-use frunk_core::hlist::LiftInto;
 
 /// Wraps the regex that forms the `Strategy` for `String` so that a sensible
 /// `Default` can be given. The default is a string of non-control characters.
@@ -56,8 +55,9 @@ impl_arbitrary!(FromUtf8Error,
 
 pub(crate) fn not_utf8_bytes() -> BoxedStrategy<Vec<u8>> {
     (any::<u16>(), gen_el_bytes()).prop_flat_map(|(valid_up_to, el_bytes)| {
-        let arg: SizeBounds = (valid_up_to as usize).into();
-        any_with_map(arg.lift_into(), move |p: Vec<char>| {
+        let bounds: SizeBounds = (valid_up_to as usize).into();
+        let args = product_pack![bounds, Default::default()];
+        any_with_map(args, move |p: Vec<char>| {
             let mut bytes = p.iter().collect::<String>().into_bytes();
             bytes.extend(el_bytes.into_iter());
             bytes

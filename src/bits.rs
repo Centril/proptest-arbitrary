@@ -73,9 +73,10 @@ impl<T: BitSetLike> Bits<T> {
 /// Bits is a simple newtype for treating the generic type parameter `T` as
 /// a set of bits for the purposes of production of arbitrary values.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug,
-         Generic, From,
+         From,
          Not, Neg, BitAnd, BitOr, BitXor,
          Add, Sub, AddAssign, SubAssign, Mul, Div, Rem, Shr, Shl)]
+#[cfg_attr(feature = "frunk", derive(Generic))]
 pub struct Bits<T: BitSetLike>(T);
 
 macro_rules! impl_bits {

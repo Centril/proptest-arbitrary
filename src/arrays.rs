@@ -5,6 +5,8 @@
 //==============================================================================
 
 use super::*;
+use init_with::InitWith;
+use std::mem;
 
 /// A function taking `ParamsFor<A>` and transforming it. Allows
 /// callers of `arbitrary_with` for arrays to mutate the parameters for each
@@ -20,10 +22,8 @@ impl<A: Clone> Default for ArrayParamMod<A> {
     }
 }
 
-type ArrayParams<A> = Hlist![A, ArrayParamMod<A>];
+type ArrayParams<A> = product_type![A, ArrayParamMod<A>];
 
-use init_with::InitWith;
-use std::mem;
 
 macro_rules! impl_array {
     ($($n: expr),*) => {
@@ -36,7 +36,7 @@ macro_rules! impl_array {
                 type Parameters = ArrayParams<A::Parameters>;
                 type Strategy = [A::Strategy; $n];
                 fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
-                    let hlist_pat![mut curr, apm] = args;
+                    let product_unpack![mut curr, apm] = args;
                     let mut i = 0;
                     <[A::Strategy; $n]>::init_with(|| {
                         let next = (apm.0)(i, curr.clone());

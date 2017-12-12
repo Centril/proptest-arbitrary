@@ -4,6 +4,7 @@ use super::*;
 
 mod ascii;
 
+
 // TODO: Implement once it is possible to implement Arbitrary for &'a A`.
 //mod borrow;
 

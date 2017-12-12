@@ -21,17 +21,17 @@ use proptest::collection::*;
 //==============================================================================
 
 /// Parameters for configuring the generation of `StrategyFor<...<A>>`.
-type RangedParams1<A> = Hlist![SizeBounds, A];
+type RangedParams1<A> = product_type![SizeBounds, A];
 
 /// Parameters for configuring the generation of `StrategyFor<...<A, B>>`.
-type RangedParams2<A, B> = Hlist![SizeBounds, A, B];
+type RangedParams2<A, B> = product_type![SizeBounds, A, B];
 
 macro_rules! impl_1 {
     ($typ: ident, $strat: ident, $($bound : path),* => $fun: ident) => {
         arbitrary_for!([A: Arbitrary<'a> $(+ $bound)*] $typ<A>,
             $strat<A::Strategy>, RangedParams1<A::Parameters>,
             args => {
-                let hlist_pat![range, a] = args;
+                let product_unpack![range, a] = args;
                 $fun(any_with::<A>(a), range.into())
             });
     };
@@ -43,7 +43,7 @@ macro_rules! impl_2 {
             $typ<A, B>, $strat<A::Strategy, B::Strategy>,
             RangedParams2<A::Parameters, B::Parameters>,
             args => {
-                let hlist_pat![range, a, b] = args;
+                let product_unpack![range, a, b] = args;
                 $fun(any_with::<A>(a), any_with::<B>(b), range.into())
             });
     };
@@ -86,7 +86,7 @@ where
     type Parameters = RangedParams2<A::Parameters, B::Parameters>;
     type Strategy = BTreeMapStrategy<A::Strategy, B::Strategy>;
     fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
-        let hlist_pat![range, a, b] = args;
+        let product_unpack![range, a, b] = args;
         btree_map(any_with::<A>(a), any_with::<B>(b), range.into())
     }
 }

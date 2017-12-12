@@ -86,6 +86,10 @@
 
 #![deny(missing_docs)]
 
+//==============================================================================
+// Nightly opt-in features:
+//==============================================================================
+
 #![cfg_attr(feature = "nightly", feature(
       try_from
     , decode_utf8
@@ -102,16 +106,36 @@
     , allocator_api
 ))]
 
-#[macro_use]
-extern crate derive_more;
+//==============================================================================
+// Frunk:
+//==============================================================================
 
+#[cfg(feature = "frunk")]
 #[macro_use]
 extern crate frunk_derives;
 
+#[cfg(feature = "frunk")]
 #[macro_use]
-extern crate frunk_core; 
+extern crate frunk_core;
+
+#[cfg(feature = "frunk")]
+#[macro_use] mod product_frunk;
+
+#[cfg(not(feature = "frunk"))]
+#[macro_use] mod product_tuple;
+
+//==============================================================================
+// Utility:
+//==============================================================================
+
+#[macro_use]
+extern crate derive_more;
 
 extern crate init_with;
+
+//==============================================================================
+// proptest:
+//==============================================================================
 
 #[macro_use]
 extern crate proptest;
@@ -576,8 +600,8 @@ where
 // Modules:
 //==============================================================================
 
-#[macro_use]
-mod macros;
+#[macro_use] mod macros;
+
 mod utils;
 use utils::*;
 pub use utils::{Mapped, FMapped as MappedF, SMapped as MappedS};
@@ -589,6 +613,7 @@ pub use params::*;
 
 mod primitives;
 pub use primitives::*;
+
 pub mod bits;
 
 mod _std;
@@ -596,6 +621,7 @@ pub use _std::*;
 
 mod arrays;
 pub use arrays::*;
+
 mod tuples;
 
 //==============================================================================

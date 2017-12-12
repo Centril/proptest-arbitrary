@@ -38,7 +38,8 @@ impl<'a> Default for CharParameters<'a> {
 }
 
 /// Parameters to pass to `proptest::char::CharStrategy::new(..)`.
-#[derive(Clone, PartialEq, Eq, Hash, Debug, Generic, From, Into)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug, From, Into)]
+#[cfg_attr(feature = "frunk", derive(Generic))]
 pub struct CharParameters<'a> {
     special: CowSlices<'a, char>,
     preferred: CowSlices<'a, CharRange>,

@@ -15,19 +15,28 @@ description = """
 The Arbitrary trait for proptest and implementations for standard types.
 """
 
+[badges]
+
+maintenance = { status = "experimental" }
+
+[features]
+
+default = ["frunk"]
+
+# Enables nightly features of Rust.
+nightly = []
+
+# Uses frunk_core and frunk_derives for Hlist and generic.
+frunk = ["frunk_core", "frunk_derives"]
+
 [dependencies]
 proptest = "0.3.2"
 
-frunk_core = "0.0.21"
+frunk_core = { version = "0.0.21", optional = true }
     #{ git = "https://github.com/Centril/frunk", branch = "feature/partial-default-and-conversions" }
-frunk_derives = "0.0.22"
+frunk_derives = { version = "0.0.22", optional = true }
     #{ git = "https://github.com/Centril/frunk", branch = "feature/partial-default-and-conversions" }
 
 init_with = "1.1.0"
 derive_more = "0.7.0"
 bit-set  = "0.4.0"
-
-[features]
-
-# Enables nightly features of Rust.
-nightly = []

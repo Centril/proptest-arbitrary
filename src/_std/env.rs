@@ -91,7 +91,6 @@ mod tests {
     use any_with;
     use super::super::*;
     use proptest::collection::vec;
-    use frunk_core::hlist::LiftInto;
     use std::ops::Range;
 
     use super::*;

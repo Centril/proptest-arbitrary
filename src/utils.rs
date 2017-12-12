@@ -139,7 +139,6 @@ where
 /// A static map from a strategy of `I` to `O`.
 pub type SMapped<'a, I, O> = SMap<StrategyType<'a, I>, SFnMap<I, O>>;
 
-
 //==============================================================================
 // FnMap + static_map:
 //==============================================================================

@@ -42,9 +42,10 @@ impl_arbitrary!(Probability, SFnPtrMap<Range<f64>, Self>, {
 });
 
 /// A probability in the range `[0.0, 1.0]` with default `0.5`.
-#[derive(Clone, Copy, PartialEq, Debug, Generic, Into,
+#[derive(Clone, Copy, PartialEq, Debug, Into,
          Add, Sub, AddAssign, SubAssign, Mul, Div, Rem, Shr, Shl,
          MulAssign, DivAssign, RemAssign, ShrAssign, ShlAssign)]
+#[cfg_attr(feature = "frunk", derive(Generic))]
 pub struct Probability(f64);
 
 //==============================================================================
@@ -112,5 +113,6 @@ impl_arbitrary!(SizeBounds, SMapped<'a, U2, Self>, {
 
 /// The minimum and maximum bounds on the size of a collection.
 /// The interval must form a subset of `[0, std::usize::MAX)`.
-#[derive(Clone, PartialEq, Eq, Hash, Debug, Generic, From, Into)]
+#[derive(Clone, PartialEq, Eq, Hash, Debug, From, Into)]
+#[cfg_attr(feature = "frunk", derive(Generic))]
 pub struct SizeBounds(Range<usize>);

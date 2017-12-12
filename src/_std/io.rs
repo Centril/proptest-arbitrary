@@ -1,36 +1,36 @@
 use super::*;
 use std::io::*;
 use std::io::ErrorKind::*;
-use frunk_core::hlist::LiftInto;
 
 // TODO: IntoInnerError
 // Consider: std::io::Initializer
 
-arbitrary_for!(
-    [A: Read + Arbitrary<'a>] BufReader<A>,
-    SMapped<'a, (A, Option<u16>), Self>, A::Parameters,
-    args => any_with_smap(args.lift_into(), |(inner, cap)|
-        if let Some(cap) = cap {
-            BufReader::with_capacity(cap as usize, inner)
-        } else {
-            BufReader::new(inner)
-        }
-    )
-);
-arbitrary_for!(
-    [A: Write + Arbitrary<'a>] BufWriter<A>,
-    SMapped<'a, (A, Option<u16>), Self>, A::Parameters,
-    args => any_with_smap(args.lift_into(), |(inner, cap)|
-        if let Some(cap) = cap {
-            BufWriter::with_capacity(cap as usize, inner)
-        } else {
-            BufWriter::new(inner)
-        }
-    )
-);
+macro_rules! buffer {
+    ($type: ident, $bound: path) => {
+        arbitrary_for!(
+            [A: Arbitrary<'a> + $bound] $type<A>,
+            SMapped<'a, (A, Option<u16>), Self>, A::Parameters,
+            args => {
+                let args2 = product_pack![args, Default::default()];
+                any_with_smap(args2, |(inner, cap)|
+                    if let Some(cap) = cap {
+                        $type::with_capacity(cap as usize, inner)
+                    } else {
+                        $type::new(inner)
+                    }
+                )
+            }
+        );
+    };
+}
+
+buffer!(BufReader,  Read);
+buffer!(BufWriter,  Write);
+buffer!(LineWriter, Write);
+
 arbitrary_for!(
     [A: Read + Arbitrary<'a>, B: Read + Arbitrary<'a>] Chain<A, B>,
-    SMapped<'a, (A, B), Self>, Hlist![A::Parameters, B::Parameters],
+    SMapped<'a, (A, B), Self>, product_type![A::Parameters, B::Parameters],
     args => any_with_smap(args, |(a, b)| a.chain(b))
 );
 impl_wrap_gen!([] Cursor);
@@ -41,28 +41,17 @@ gen_strat!(
     ; Stdin, stdin
     ; Stdout, stdout
 );
-arbitrary_for!(
-    [A: Write + Arbitrary<'a>] LineWriter<A>,
-    SMapped<'a, (A, Option<u16>), Self>, A::Parameters,
-    args => any_with_smap(args.lift_into(), |(inner, cap)|
-        if let Some(cap) = cap {
-            LineWriter::with_capacity(cap as usize, inner)
-        } else {
-            LineWriter::new(inner)
-        }
-    )
-);
 impl_wrap_gen!([BufRead] Lines, BufRead::lines);
 impl_arbitrary!(Repeat, SMapped<'a, u8, Self>, any_with_smap((), repeat));
 arbitrary_for!(
     [A: BufRead + Arbitrary<'a>] Split<A>,
     SMapped<'a, (A, u8), Self>, A::Parameters,
-    args => any_with_smap(args.lift_into(), |(a, b)| a.split(b))
+    args => any_with_smap(product_pack![args, ()], |(a, b)| a.split(b))
 );
 arbitrary_for!(
     [A: Read + Arbitrary<'a>] Take<A>,
     SMapped<'a, (A, u64), Self>, A::Parameters,
-    args => any_with_smap(args.lift_into(), |(a, b)| a.take(b))
+    args => any_with_smap(product_pack![args, ()], |(a, b)| a.take(b))
 );
 
 #[cfg(feature = "nightly")]
