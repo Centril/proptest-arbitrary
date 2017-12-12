@@ -4,8 +4,6 @@
 // Primitive types:
 //==============================================================================
 
-use super::*;
-
 use proptest::{bool, char};
 use proptest::num::{isize, usize, f32, f64, i16, i32, i64, i8, u16, u32, u64, u8};
 
@@ -47,6 +45,6 @@ pub struct CharParameters<'a> {
     ranges: CowSlices<'a, CharRange>,
 }
 
-arbitrary_for!(char [] [char::CharStrategy<'a>] [CharParameters<'a>], args => {
+arbitrary_for!([] char, char::CharStrategy<'a>, CharParameters<'a>, args => {
     char::CharStrategy::new(args.special, args.preferred, args.ranges)
 });

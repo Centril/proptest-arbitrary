@@ -16,6 +16,8 @@ The Arbitrary trait for proptest and implementations for standard types.
 """
 
 [dependencies]
+proptest = "0.3.2"
+
 frunk_core = "0.0.21"
     #{ git = "https://github.com/Centril/frunk", branch = "feature/partial-default-and-conversions" }
 frunk_derives = "0.0.22"
@@ -23,5 +25,4 @@ frunk_derives = "0.0.22"
 
 init_with = "1.1.0"
 derive_more = "0.7.0"
-proptest = "0.3.1"
 bit-set  = "0.4.0"

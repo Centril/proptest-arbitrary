@@ -3,18 +3,20 @@
 //==============================================================================
 
 use super::*;
+use std::option as opt;
 use proptest::option::{self, OptionStrategy};
 
-/// Parameters for configuring the generation of `StrategyFor<Option<A>>`.
-type OptionParams<A> = Hlist![Probability, A];
-
-impl<'a, A: Arbitrary<'a>> Arbitrary<'a> for Option<A> {
-    valuetree!();
-    type Parameters = OptionParams<A::Parameters>;
-    type Strategy = OptionStrategy<A::Strategy>;
-
-    fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
+arbitrary_for!(
+    [A: Arbitrary<'a>] Option<A>,
+    OptionStrategy<A::Strategy>, Hlist![Probability, A::Parameters],
+    args => {
         let hlist_pat![prob, a] = args;
-        option::weighted(prob.into(), arbitrary_with(a))
+        option::weighted(prob.into(), any_with::<A>(a))
     }
-}
+);
+
+arbitrary_for!([A: Arbitrary<'a>] opt::IntoIter<A>,
+    SMapped<'a, Option<A>, Self>, <Option<A> as Arbitrary<'a>>::Parameters,
+    args => any_with_smap(args, Option::into_iter));
+
+impl_just!(opt::NoneError, opt::NoneError);

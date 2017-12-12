@@ -42,7 +42,7 @@ macro_rules! impl_array {
                         let next = (apm.0)(i, curr.clone());
                         let new  = mem::replace(&mut curr, next);
                         i += 1;
-                        any_with::<A, _>(new)
+                        any_with::<A>(new)
                     })
                 }
             }

@@ -1,4 +1,2 @@
 //! Arbitrary for `Box<A>`.
-
-use super::*;
-impl_wrap_gen!(Box);
+impl_wrap_from!([] Box);

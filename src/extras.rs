@@ -1,6 +1,7 @@
 //! Extra strategies.
 
 use super::*;
+use proptest::test_runner::TestRunner;
 
 /// Strategy for generating `V`s from a function.
 /// It's not a very interesting Strategy, but required sometimes.
@@ -13,8 +14,6 @@ impl<V> GenStrategy<V> {
         GenStrategy(fun)
     }
 }
-
-use proptest::test_runner::TestRunner;
 
 impl<V: Debug> Strategy for GenStrategy<V> {
     type Value = Self;

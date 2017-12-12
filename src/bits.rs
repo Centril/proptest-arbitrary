@@ -1,13 +1,12 @@
 //! Arbitrary implementations for integral types as bit patterns.
 
+use super::*;
+
 use std::mem;
 use std::ops::Range;
 
 use proptest::bits::{BitSetLike, BitSetStrategy};
 use bit_set::BitSet;
-
-use super::*;
-use from_mapper::*;
 
 use self::BitsParams::*;
 
@@ -86,18 +85,14 @@ macro_rules! impl_bits {
                 fn from(x: Bits<Self>) -> Self { x.0 }
             }
 
-            impl<'a> Arbitrary<'a> for Bits<$typ> {
-                valuetree!();
-                type Parameters = BitsParams<$typ>;
-                type Strategy = FromMapStrategy<BitSetStrategy<$typ>, $typ, Self>;
-                fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
-                    let strat = match args {
-                        Ranged(r) => BitSetStrategy::new(r.start, r.end),
-                        Masked(m) => BitSetStrategy::masked(m),
-                    };
-                    FromMapStrategy::new(strat, FromMapper::default())
-                }
-            }
+            arbitrary_for!([] Bits<$typ>,
+                FromMapStrategy<BitSetStrategy<$typ>, Self>,
+                BitsParams<$typ>,
+                args => from_map_strategy(match args {
+                    Ranged(r) => BitSetStrategy::new(r.start, r.end),
+                    Masked(m) => BitSetStrategy::masked(m),
+                })
+            );
         )*
     };
 }

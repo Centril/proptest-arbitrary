@@ -1,52 +1,52 @@
+//! Arbitrary implementations for `std::collections`.
+
 #![cfg_attr(feature="cargo-clippy", allow(implicit_hasher))]
 
 //==============================================================================
 // Imports:
 //==============================================================================
 
+use super::*;
+
 use std::hash::Hash;
 use std::vec::Vec;
+use std::rc::Rc;
+use std::sync::Arc;
 use std::collections::*;
-
-use super::*;
-use ::from_mapper::{W, static_map, SMapped};
 
 use proptest::collection::*;
 use proptest::strategy::{Just, TupleUnion};
 
+//==============================================================================
+// Macros:
+//==============================================================================
+
 /// Parameters for configuring the generation of `StrategyFor<...<A>>`.
-type RangedParams1<A> = Hlist![CollectionSizeBounds, A];
+type RangedParams1<A> = Hlist![SizeBounds, A];
 
 /// Parameters for configuring the generation of `StrategyFor<...<A, B>>`.
-type RangedParams2<A, B> = Hlist![CollectionSizeBounds, A, B];
+type RangedParams2<A, B> = Hlist![SizeBounds, A, B];
 
 macro_rules! impl_1 {
-    ($typ: ident, $strat: ident, $($bound : path),*
-        => $fun: ident) => {
-        impl<'a, A: Arbitrary<'a> $(+ $bound)*> Arbitrary<'a> for $typ<A> {
-            valuetree!();
-            type Parameters = RangedParams1<A::Parameters>;
-            type Strategy = $strat<A::Strategy>;
-            fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
+    ($typ: ident, $strat: ident, $($bound : path),* => $fun: ident) => {
+        arbitrary_for!([A: Arbitrary<'a> $(+ $bound)*] $typ<A>,
+            $strat<A::Strategy>, RangedParams1<A::Parameters>,
+            args => {
                 let hlist_pat![range, a] = args;
-                $fun(arbitrary_with(a), range.into())
-            }
-        }
+                $fun(any_with::<A>(a), range.into())
+            });
     };
 }
 
 macro_rules! impl_2 {
     ($typ: ident, $strat: ident, $($bound : path),* => $fun: ident) => {
-        impl<'a, A: Arbitrary<'a> $(+ $bound)* , B: Arbitrary<'a>> Arbitrary<'a>
-        for $typ<A, B> {
-            valuetree!();
-            type Parameters = RangedParams2<A::Parameters, B::Parameters>;
-            type Strategy = $strat<A::Strategy, B::Strategy>;
-            fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
+        arbitrary_for!([A: Arbitrary<'a> $(+ $bound)*, B: Arbitrary<'a>]
+            $typ<A, B>, $strat<A::Strategy, B::Strategy>,
+            RangedParams2<A::Parameters, B::Parameters>,
+            args => {
                 let hlist_pat![range, a, b] = args;
-                $fun(arbitrary_with(a), arbitrary_with(b), range.into())
-            }
-        }
+                $fun(any_with::<A>(a), any_with::<B>(b), range.into())
+            });
     };
 }
 
@@ -54,7 +54,17 @@ macro_rules! impl_2 {
 // Vec, VecDeque, LinkedList, BTreeSet, BinaryHeap, HashSet, HashMap:
 //==============================================================================
 
+macro_rules! dst_wrapped {
+    ($($w: ident),*) => {
+        $(arbitrary_for!([A: Arbitrary<'a>] $w<[A]>,
+            FMapped<'a, Vec<A>, Self>, <Vec<A> as Arbitrary<'a>>::Parameters,
+            a => any_with_sinto::<Vec<A>, _>(a)
+        );)*
+    };
+}
+
 impl_1!(Vec, VecStrategy, => vec);
+dst_wrapped!(Box, Rc, Arc);
 impl_1!(VecDeque, VecDequeStrategy, => vec_deque);
 impl_1!(LinkedList, LinkedListStrategy, => linked_list);
 impl_1!(BTreeSet, BTreeSetStrategy, Ord => btree_set);
@@ -78,7 +88,63 @@ where
     type Strategy = BTreeMapStrategy<A::Strategy, B::Strategy>;
     fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
         let hlist_pat![range, a, b] = args;
-        btree_map(arbitrary_with(a), arbitrary_with(b), range.into())
+        btree_map(any_with::<A>(a), any_with::<B>(b), range.into())
+    }
+}
+
+//==============================================================================
+// IntoIterator:
+//==============================================================================
+
+macro_rules! into_iter_1 {
+    ($module: ident, $type: ident $(, $bound : path)*) => {
+        arbitrary_for!([A: Arbitrary<'a> $(+ $bound)*]
+            $module::IntoIter<A>,
+            SMapped<'a, $type<A>, Self>,
+            <$type<A> as Arbitrary<'a>>::Parameters,
+            args => any_with_smap(args, $type::into_iter));
+    };
+}
+
+macro_rules! into_iter_2 {
+    ($module: ident, $type: ident $(, $bound : path)*) => {
+        arbitrary_for!([A: Arbitrary<'a> $(+ $bound)*, B: Arbitrary<'a>]
+            $module::IntoIter<A, B>,
+            SMapped<'a, $type<A, B>, Self>,
+            <$type<A, B> as Arbitrary<'a>>::Parameters,
+            args => any_with_smap(args, $type::into_iter));
+    };
+}
+
+use std::vec;
+into_iter_1!(vec, Vec);
+use std::collections::vec_deque;
+into_iter_1!(vec_deque, VecDeque);
+use std::collections::linked_list;
+into_iter_1!(linked_list, LinkedList);
+use std::collections::btree_set;
+into_iter_1!(btree_set, BTreeSet, Ord);
+use std::collections::binary_heap;
+into_iter_1!(binary_heap, BinaryHeap, Ord);
+use std::collections::hash_set;
+into_iter_1!(hash_set, HashSet, Hash, Eq);
+use std::collections::hash_map;
+into_iter_2!(hash_map, HashMap, Hash, Eq);
+
+use std::collections::btree_map;
+
+impl<'a, A, B> Arbitrary<'a> for btree_map::IntoIter<A, B>
+where
+    A: Arbitrary<'static> + Ord,
+    B: Arbitrary<'static>,
+    StrategyFor<A>: 'static,
+    StrategyFor<B>: 'static,
+{
+    valuetree!();
+    type Parameters = <BTreeMap<A, B> as Arbitrary<'a>>::Parameters;
+    type Strategy = SMapped<'a, BTreeMap<A, B>, Self>;
+    fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
+        any_with_smap(args, BTreeMap::into_iter)        
     }
 }
 
@@ -101,8 +167,8 @@ where
 
     fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
         prop_oneof![
-            2 => static_map(any_with::<A, _>(args.clone()), Bound::Included),
-            2 => static_map(any_with::<A, _>(args), Bound::Excluded),
+            2 => any_with_smap(args.clone(), Bound::Included),
+            2 => any_with_smap(args, Bound::Excluded),
             1 => Just(Bound::Unbounded),
         ]
     }

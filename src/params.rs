@@ -2,9 +2,8 @@
 
 use super::*;
 
-use std::ops::{Add, Range};
+use std::ops::{Add, Range, RangeTo};
 use proptest::num::f64;
-use from_mapper::{SMapped, SFnPtrMap, static_map};
 
 macro_rules! default {
     ($type: ty, $val: expr) => {
@@ -49,43 +48,54 @@ impl_arbitrary!(Probability, SFnPtrMap<Range<f64>, Self>, {
 pub struct Probability(f64);
 
 //==============================================================================
-// CollectionSizeBounds, default = 0..100.
+// SizeBounds, default = 0..100.
 //==============================================================================
 
-default!(CollectionSizeBounds, (0..100));
+default!(SizeBounds, 0..100);
 
 type U2 = (usize, usize);
 
-impl CollectionSizeBounds {
-    /// Creates a `CollectionSizeBounds` from a `Range<usize>`.
+impl SizeBounds {
+    /// Creates a `SizeBounds` from a `Range<usize>`.
     pub fn new(range: Range<usize>) -> Self {
-        CollectionSizeBounds(range)
+        SizeBounds(range)
+    }
+
+    pub (crate) fn and<X>(self, and: X) -> (Self, X) {
+        (self, and)
     }
 }
 
-/// Given `(low: usize, high: usize)`, then a range `(low..high)` is the result.
-/// If the range is inverted, i.e: `low > high`,
-/// then `low` and `high` are first swapped.
-impl From<U2> for CollectionSizeBounds {
+pub (crate) fn size_bounds<X>(from: X) -> SizeBounds
+where
+    SizeBounds: From<X> {
+    SizeBounds::from(from)
+}
+
+/// Given `(low: usize, high: usize)`, then a range `[low..high)` is the result.
+impl From<U2> for SizeBounds {
     fn from(x: U2) -> Self {
-        let (mut low, mut high) = x;
-        if low > high {
-            ::std::mem::swap(&mut low, &mut high);
-        }
-        CollectionSizeBounds::new(low..high)
+        (x.0..x.1).into()
     }
 }
 
-/// Given `high: usize`, then a range `(0..high)` is the result.
-impl From<usize> for CollectionSizeBounds {
+/// Given `exact`, then a range `[exact..exact + 1)` is the result.
+impl From<usize> for SizeBounds {
     fn from(high: usize) -> Self {
-        (0, high).into()
+        (high, high + 1).into()
+    }
+}
+
+/// Given `..high`, then a range `[0..high)` is the result.
+impl From<RangeTo<usize>> for SizeBounds {
+    fn from(high: RangeTo<usize>) -> Self {
+        (0, high.end).into()
     }
 }
 
 /// Adds `usize` to both start and end of the bounds.
-impl Add<usize> for CollectionSizeBounds {
-    type Output = CollectionSizeBounds;
+impl Add<usize> for SizeBounds {
+    type Output = SizeBounds;
 
     fn add(self, rhs: usize) -> Self::Output {
         let Range { start, end } = self.into();
@@ -96,11 +106,11 @@ impl Add<usize> for CollectionSizeBounds {
     }
 }
 
-impl_arbitrary!(CollectionSizeBounds, SMapped<'a, U2, Self>, {
-    static_map(arbitrary(), <CollectionSizeBounds as From<U2>>::from)
+impl_arbitrary!(SizeBounds, SMapped<'a, U2, Self>, {
+    static_map(any::<U2>(), <SizeBounds as From<U2>>::from)
 });
 
 /// The minimum and maximum bounds on the size of a collection.
 /// The interval must form a subset of `[0, std::usize::MAX)`.
 #[derive(Clone, PartialEq, Eq, Hash, Debug, Generic, From, Into)]
-pub struct CollectionSizeBounds(Range<usize>);
+pub struct SizeBounds(Range<usize>);

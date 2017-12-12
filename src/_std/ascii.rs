@@ -1,11 +1,8 @@
 //! Arbitrary implementations for `std::ascii`.
 
 use super::*;
-use std::ascii;
-use from_mapper::Mapped;
+use std::ascii::{EscapeDefault, escape_default};
 
-arbitrary_for!(ascii::EscapeDefault []
-    [Mapped<'a, u8, ascii::EscapeDefault>]
-    [ParamsType<'a, u8>],
-    args => { any_with::<u8, _>(args).prop_map(ascii::escape_default) }
+arbitrary_for!([] EscapeDefault, SMapped<'a, u8, Self>, ParamsType<'a, u8>,
+    args => any_with_smap(args, escape_default)
 );

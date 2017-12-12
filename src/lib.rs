@@ -76,8 +76,8 @@
 //! in calling Arbitrary, in practice, this should not be a problem.
 //!
 //! This crate mostly just contains Arbitrary and implementations for it.
-//! Hence, it is unlikely to see breaking change. If any change occurs, it will
-//! likely be new implementations or newtypes around common types.
+//! Therefore, it is unlikely to see breaking change. If any change occurs,
+//! it will likely be new implementations or newtypes around common types.
 //!
 //! See the [changelog] for a full list of substantial historical changes,
 //! breaking and otherwise.
@@ -101,11 +101,12 @@
 //! https://hackage.haskell.org/package/QuickCheck
 
 
-#![feature(try_from, decode_utf8)]
-
-
-
-
+#![feature(
+    try_from, decode_utf8, io, iterator_step_by, ip,
+    inclusive_range_syntax, inclusive_range, generator_trait,
+    try_trait, integer_atomics, mpsc_select, thread_local_state,
+    allocator_api
+)]
 
 
 #![deny(missing_docs)]
@@ -128,7 +129,7 @@ extern crate bit_set;
 
 use std::fmt::Debug;
 
-use proptest::strategy::{BoxedStrategy, Strategy, ValueTree};
+use proptest::strategy::{BoxedStrategy, Strategy, ValueTree, W};
 
 //==============================================================================
 // Arbitrary trait + auxilary functions:
@@ -160,15 +161,12 @@ pub trait Arbitrary<'a>: Sized + Debug {
     /// requires that `Self::Parameters` implements [`Default`].
     ///
     /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
-
     /// [`X::arbitrary_with(Default::default())`]:
     ///     trait.Arbitrary.html#tymethod.arbitrary_with
     ///
     /// [`Default`]:
     ///     https://doc.rust-lang.org/nightly/std/default/trait.Default.html
     fn arbitrary() -> Self::Strategy
-    where
-        Self::Parameters: Default,
     {
         Self::arbitrary_with(Default::default())
     }
@@ -194,7 +192,7 @@ pub trait Arbitrary<'a>: Sized + Debug {
     /// [`arbitrary_with`]: trait.Arbitrary.html#tymethod.arbitrary_with
     ///
     /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
-    type Parameters;
+    type Parameters: Default;
 
     /// The type of [`ValueTree`] used for `Self`'s [`Strategy`].
     ///
@@ -286,6 +284,8 @@ pub type ParamsFor<A> = ParamsType<'static, A>;
 /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
 pub type ParamsType<'a, A> = <A as Arbitrary<'a>>::Parameters;
 
+/*
+
 /// Generates a [`Strategy`] producing [`Arbitrary`] values of `A`.
 /// Works better with type inference than [`any::<A>()`].
 ///
@@ -358,15 +358,17 @@ where
 /// [`arbitrary()`]: fn.arbitrary.html
 /// [`Arbitrary`]: trait.Arbitrary.html
 /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
-pub fn arbitrary_with<'a, PF, A, S, V, P>(args: PF) -> S
+pub fn arbitrary_with<'a, A, S, V, P>(args: P) -> S
 where
-    P: From<PF>,
+    P: Default,
     V: ValueTree<Value = A>,
     S: Strategy<Value = V>,
     A: Arbitrary<'a, Strategy = S, ValueTree = V, Parameters = P>,
 {
-    A::arbitrary_with(args.into())
+    A::arbitrary_with(args)
 }
+
+*/
 
 /// Generates a [`Strategy`] producing [`Arbitrary`] values of `A`.
 /// Unlike [`arbitrary`], it should be used for being explicit on what `A` is.
@@ -398,10 +400,7 @@ where
 /// [`arbitrary`]: fn.arbitrary.html
 /// [`Arbitrary`]: trait.Arbitrary.html
 /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
-pub fn any<'a, A: Arbitrary<'a>>() -> StrategyType<'a, A>
-where
-    ParamsType<'a, A>: Default
-{
+pub fn any<'a, A: Arbitrary<'a>>() -> StrategyType<'a, A> {
     A::arbitrary()
 }
 
@@ -425,7 +424,7 @@ where
 /// use proptest_arbitrary::{any_with, StrategyFor};
 ///
 /// fn gen_bool(x: bool) -> StrategyFor<bool> {
-///     any_with::<bool, _>(())
+///     any_with::<bool>(())
 /// }
 ///
 /// # fn main() {}
@@ -434,13 +433,12 @@ where
 /// [`arbitrary_with`]: fn.arbitrary_with.html
 /// [`Arbitrary`]: trait.Arbitrary.html
 /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
-pub fn any_with<'a, A, PF>(args: PF) -> StrategyType<'a, A>
-where
-    A: Arbitrary<'a>,
-    ParamsType<'a, A>: From<PF>,
-{
-    A::arbitrary_with(args.into())
+pub fn any_with<'a, A: Arbitrary<'a>>(args: A::Parameters)
+    -> StrategyType<'a, A> {
+    A::arbitrary_with(args)
 }
+
+/*
 
 /// Generates a [`Strategy`] producing [`Arbitrary`] values of `A`.
 /// This version boxes the `Strategy`, and thus you needn't specify `A`.
@@ -470,9 +468,9 @@ where
 /// [`box_any_with(args)`]: fn.box_any_with.html
 /// [`Arbitrary`]: trait.Arbitrary.html
 /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
-pub fn box_any<A: Arbitrary<'static> + 'static>() -> BoxedStrategy<A>
+pub fn box_any<A>() -> BoxedStrategy<A>
 where
-    ParamsFor<A>: Default,
+    A: Arbitrary<'static> + 'static,
     StrategyFor<A>: 'static,
 {
     any::<A>().boxed()
@@ -506,21 +504,15 @@ where
 /// [`box_any::<A>()`]: fn.box_any.html
 /// [`Arbitrary`]: trait.Arbitrary.html
 /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
-pub fn box_any_with<A, PF>(args: PF) -> BoxedStrategy<A>
+pub fn box_any_with<A>(args: A::Parameters) -> BoxedStrategy<A>
 where
     A: Arbitrary<'static> + 'static,
-    ParamsFor<A>: From<PF>,
     StrategyFor<A>: 'static,
 {
-    any_with::<A, _>(args).boxed()
+    any_with::<A>(args).boxed()
 }
 
-/// The end value used by functions under test that a [`Strategy`] produces via
-/// its [`ValueTree`]
-///
-/// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
-/// [`ValueTree`]: ../proptest/strategy/trait.ValueTree.html
-pub type ValueOf<S> = <<S as Strategy>::Value as ValueTree>::Value;
+*/
 
 //==============================================================================
 // Modules:
@@ -528,21 +520,24 @@ pub type ValueOf<S> = <<S as Strategy>::Value as ValueTree>::Value;
 
 #[macro_use]
 mod macros;
-mod from_mapper;
-pub use from_mapper::{Mapped, SMapped};
-pub mod extras;
+mod utils;
+use utils::*;
+pub use utils::{Mapped, FMapped, SMapped};
+use extras::*;
+mod extras;
 
-pub mod params;
-use params::*;
+mod params;
+pub use params::*;
 
-pub mod primitives;
+mod primitives;
+pub use primitives::*;
 pub mod bits;
 
-pub mod _std;
+mod _std;
+pub use _std::*;
 
-mod string;
-
-pub mod arrays;
+mod arrays;
+pub use arrays::*;
 mod tuples;
 
 //==============================================================================
