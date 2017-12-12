@@ -131,13 +131,13 @@ use proptest::strategy::*;
 /// producing arbitrary values of the implementing type *(`Self`)*.
 ///
 /// This trait is the equivalent of
-/// [Haskell QuickCheck's implementation of `Arbitrary`].
+/// [Haskell QuickCheck's implementation of `Arbitrary`][HaskellQC].
 /// In this interpretation of `Arbitray`, `Strategy` is the equivalent of
 /// the `Gen` monad.
 ///
 /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
 ///
-/// [Haskell QuickCheck's implementation of `Arbitrary`]:
+/// [HaskellQC]
 /// https://hackage.haskell.org/package/QuickCheck/docs/Test-QuickCheck-Arbitrary.html
 pub trait Arbitrary<'a>: Sized + Debug {
     // Unfortunately, Generic Associated Types won't be in stable for some time.
@@ -156,8 +156,7 @@ pub trait Arbitrary<'a>: Sized + Debug {
     /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
     /// [`X::arbitrary_with(Default::default())`]:
     ///     trait.Arbitrary.html#tymethod.arbitrary_with
-    fn arbitrary() -> Self::Strategy
-    {
+    fn arbitrary() -> Self::Strategy {
         Self::arbitrary_with(Default::default())
     }
 
