@@ -3,7 +3,6 @@
 use super::*;
 use std::cmp::{Reverse, Ordering};
 use self::Ordering::*;
-use proptest::strategy::{Just, TupleUnion};
 
 impl_wrap_gen!([] Reverse, Reverse);
 

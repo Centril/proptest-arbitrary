@@ -1,7 +1,6 @@
 use super::*;
 use std::net::*;
 use std::net::Shutdown::*;
-use proptest::strategy::{Just, TupleUnion};
 
 // TODO: Can we design a workable semantic for PBT wrt. actual networking
 // connections?
@@ -48,6 +47,8 @@ impl_arbitrary!(SocketAddr,
                 W<FMapped<'a, SocketAddrV6, Self>>)>,
     prop_oneof![any_sinto::<SocketAddrV4, _>(), any_sinto::<SocketAddrV6, _>()]
 );
+
+#[cfg(feature = "nightly")]
 impl_arbitrary!(Ipv6MulticastScope,
     TupleUnion<( W<Just<Self>>, W<Just<Self>>, W<Just<Self>>
                , W<Just<Self>>, W<Just<Self>>, W<Just<Self>>, W<Just<Self>>)>,

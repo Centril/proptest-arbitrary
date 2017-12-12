@@ -2,7 +2,6 @@ use super::*;
 use std::io::*;
 use std::io::ErrorKind::*;
 use frunk_core::hlist::LiftInto;
-use proptest::strategy::{Just, Union, TupleUnion};
 
 // TODO: IntoInnerError
 // Consider: std::io::Initializer
@@ -65,6 +64,8 @@ arbitrary_for!(
     SMapped<'a, (A, u64), Self>, A::Parameters,
     args => any_with_smap(args.lift_into(), |(a, b)| a.take(b))
 );
+
+#[cfg(feature = "nightly")]
 impl_wrap_gen!([Read] Chars, Read::chars);
 
 impl_arbitrary!(ErrorKind, Union<Just<Self>>,
@@ -108,6 +109,8 @@ impl_arbitrary!(Error, SMapped<'a, (ErrorKind, Option<String>), Self>,
         if let Some(s) = os { Error::new(k, s) } else { k.into() }
     )
 );
+
+#[cfg(feature = "nightly")]
 impl_arbitrary!(CharsError, SMapped<'a, Option<Error>, Self>,
     any_with_smap(Default::default(), |oe| {
         use std::io::CharsError::*;

@@ -2,7 +2,6 @@ use super::*;
 use std::env::*;
 use std::iter::once;
 use std::ffi::OsString;
-use proptest::strategy::{Just, TupleUnion};
 use proptest::collection::vec;
 
 gen_strat!(

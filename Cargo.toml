@@ -26,3 +26,8 @@ frunk_derives = "0.0.22"
 init_with = "1.1.0"
 derive_more = "0.7.0"
 bit-set  = "0.4.0"
+
+[features]
+
+# Enables nightly features of Rust.
+nightly = []

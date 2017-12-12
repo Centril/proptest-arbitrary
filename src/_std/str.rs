@@ -1,7 +1,6 @@
 use super::*;
 use std::iter::repeat;
 use std::str::{ParseBoolError, Utf8Error, from_utf8};
-use proptest::strategy::{Just, TupleUnion};
 
 impl_just!(ParseBoolError, "".parse::<bool>().unwrap_err());
 

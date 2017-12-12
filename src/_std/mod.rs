@@ -36,4 +36,6 @@ pub use self::string::*;
 mod sync;
 mod thread;
 mod time;
+
+#[cfg(feature = "nightly")]
 mod heap;

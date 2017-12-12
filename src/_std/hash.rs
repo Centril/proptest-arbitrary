@@ -1,6 +1,6 @@
+use super::*;
 use std::hash::{BuildHasherDefault, Hasher};
 use std::collections::hash_map::{DefaultHasher, RandomState};
-use proptest::strategy::Just;
 
 arbitrary_for!(
     [H: Default + Hasher] // over-constrain on purpose!

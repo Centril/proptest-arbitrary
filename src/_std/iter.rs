@@ -1,6 +1,6 @@
 use super::*;
 use std::iter::*;
-use proptest::strategy::Just;
+use std::iter::Fuse;
 use frunk_core::hlist::LiftInto;
 
 // TODO: Filter, FilterMap, FlatMap, Map, Inspect, Scan, SkipWhile
@@ -48,4 +48,6 @@ macro_rules! usize_mod {
 
 usize_mod!(Skip, skip);
 usize_mod!(Take, take);
+
+#[cfg(feature = "nightly")]
 usize_mod!(StepBy, step_by);

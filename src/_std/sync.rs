@@ -4,7 +4,6 @@ use std::sync::atomic::*;
 use std::sync::mpsc::*;
 use std::thread;
 use std::time::Duration;
-use proptest::strategy::{Just, TupleUnion};
 
 // OnceState can not escape Once::call_once_force.
 // PoisonError depends implicitly on the lifetime on MutexGuard, etc.
@@ -69,6 +68,8 @@ macro_rules! atomic {
 
 // impl_wrap_gen!(AtomicPtr); // We don't have impl Arbitrary for *mut T yet.
 atomic!(AtomicBool, bool; AtomicIsize, isize; AtomicUsize, usize);
+
+#[cfg(feature = "nightly")]
 atomic!(AtomicI8, i8; AtomicI16, i16; AtomicI32, i32; AtomicI64, i64;
         AtomicU8, u8; AtomicU16, u16; AtomicU32, u32; AtomicU64, u64);
 
@@ -111,6 +112,8 @@ arbitrary_for!(
         any_with_smap(args, TrySendError::Full),
     ]
 );
+
+#[cfg(feature = "nightly")]
 gen_strat!(Select, Select::new);
 
 // If only half of a pair is generated then you will get a hang-up.

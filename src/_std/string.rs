@@ -8,7 +8,6 @@ use std::iter;
 use std::slice;
 use std::rc::Rc;
 use std::sync::Arc;
-use proptest::strategy::Just;
 use frunk_core::hlist::LiftInto;
 
 /// Wraps the regex that forms the `Strategy` for `String` so that a sensible

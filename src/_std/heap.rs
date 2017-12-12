@@ -1,7 +1,6 @@
 use super::*;
 use std::heap::*;
 use std::usize;
-use proptest::strategy::{Just, Strategy, BoxedStrategy, TupleUnion};
 
 impl_just!(CannotReallocInPlace, CannotReallocInPlace);
 impl_just!(Heap, Heap);

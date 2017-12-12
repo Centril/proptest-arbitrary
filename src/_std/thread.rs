@@ -2,7 +2,6 @@ use super::*;
 use std::thread::*;
 use std::time::Duration;
 use frunk_core::hlist::LiftInto;
-use proptest::strategy::{Just, TupleUnion};
 
 impl_arbitrary!(Builder, SMapped<'a, (Option<usize>, Option<String>), Self>, {
     let prob = Probability::from(0.7);
@@ -34,6 +33,7 @@ arbitrary_for!([A: 'static + Send + Arbitrary<'a>] JoinHandle<A>,
     )
 );
 
+#[cfg(feature = "nightly")]
 impl_arbitrary!(LocalKeyState,
     TupleUnion<(W<Just<Self>>, W<Just<Self>>, W<Just<Self>>)>,
     prop_oneof![

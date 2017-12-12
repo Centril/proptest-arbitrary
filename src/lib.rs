@@ -28,37 +28,21 @@
 //! ///
 //! /// [..]
 //! pub trait Arbitrary<'a> : Sized + Debug {
-//!    /// Generates a Strategy for producing arbitrary values of type the
-//!    /// implementing type (Self) [..]
-//!    fn arbitrary() -> Self::Strategy
-//!    where
-//!        Self::Parameters: Default
-//!    {
+//!    fn arbitrary() -> Self::Strategy {
 //!        Self::arbitrary_with(Default::default())
 //!    }
 //!
-//!    /// Generates a `Strategy` for producing arbitrary values of type the
-//!    /// implementing type (`Self`). The strategy is passed the arguments
-//!    /// given in args [..].
 //!    fn arbitrary_with(args: Self::Parameters) -> Self::Strategy;
 //!
-//!    /// The type of parameters that arbitrary_with accepts
-//!    /// for configuration of the generated `Strategy`.
-//!    type Parameters;
+//!    type Parameters: Default;
 //!
-//!     /// The type of `ValueTree` used for `Self`'s `Strategy`.
-//!     ///
+//!     type Strategy: Strategy<Value = Self::ValueTree>;
+//!
 //!     /// NOTE:
 //!     /// This type should NOT be relied upon outside of this crate
 //!     /// other than for implementing `Arbitrary` for other types.
 //!     type ValueTree: ValueTree<Value = Self>;
 //!
-//!     /// The type of `Strategy` used to generate values of type `Self`.
-//!     ///
-//!     /// NOTE:
-//!     /// This type should NOT be relied upon outside of this crate
-//!     /// other than for implementing `Arbitrary` for other types.
-//!     type Strategy: Strategy<Value = Self::ValueTree>;
 //! }
 //!
 //! # fn main() {}
@@ -100,16 +84,23 @@
 //! [`QuickCheck`]:
 //! https://hackage.haskell.org/package/QuickCheck
 
-
-#![feature(
-    try_from, decode_utf8, io, iterator_step_by, ip,
-    inclusive_range_syntax, inclusive_range, generator_trait,
-    try_trait, integer_atomics, mpsc_select, thread_local_state,
-    allocator_api
-)]
-
-
 #![deny(missing_docs)]
+
+#![cfg_attr(feature = "nightly", feature(
+      try_from
+    , decode_utf8
+    , io
+    , iterator_step_by
+    , ip
+    , inclusive_range_syntax
+    , inclusive_range
+    , generator_trait
+    , try_trait
+    , integer_atomics
+    , mpsc_select
+    , thread_local_state
+    , allocator_api
+))]
 
 #[macro_use]
 extern crate derive_more;
@@ -128,8 +119,7 @@ extern crate proptest;
 extern crate bit_set;
 
 use std::fmt::Debug;
-
-use proptest::strategy::{BoxedStrategy, Strategy, ValueTree, W};
+use proptest::strategy::*;
 
 //==============================================================================
 // Arbitrary trait + auxilary functions:
@@ -153,19 +143,19 @@ pub trait Arbitrary<'a>: Sized + Debug {
     // Unfortunately, Generic Associated Types won't be in stable for some time.
     // Tracking issue: https://github.com/rust-lang/rust/issues/44265
 
+    // We also can't get rid of `ValueTree` yet since it would require:
+    // type Strategy: Strategy<Value = impl ValueTree<Value = Self>>;
+    // which we can't express yet.
+
     /// Generates a [`Strategy`] for producing arbitrary values
     /// of type the implementing type (`Self`).
     ///
     /// Calling this for the type `X` is the equivalent of using
-    /// [`X::arbitrary_with(Default::default())`]. This of course
-    /// requires that `Self::Parameters` implements [`Default`].
+    /// [`X::arbitrary_with(Default::default())`].
     ///
     /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
     /// [`X::arbitrary_with(Default::default())`]:
     ///     trait.Arbitrary.html#tymethod.arbitrary_with
-    ///
-    /// [`Default`]:
-    ///     https://doc.rust-lang.org/nightly/std/default/trait.Default.html
     fn arbitrary() -> Self::Strategy
     {
         Self::arbitrary_with(Default::default())
@@ -187,12 +177,19 @@ pub trait Arbitrary<'a>: Sized + Debug {
     fn arbitrary_with(args: Self::Parameters) -> Self::Strategy;
 
     /// The type of parameters that [`arbitrary_with`] accepts for configuration
-    /// of the generated [`Strategy`].
+    /// of the generated [`Strategy`]. Parameters must implement [`Default`].
     ///
     /// [`arbitrary_with`]: trait.Arbitrary.html#tymethod.arbitrary_with
     ///
     /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
+    /// [`Default`]:
+    ///     https://doc.rust-lang.org/nightly/std/default/trait.Default.html
     type Parameters: Default;
+
+    /// The type of [`Strategy`] used to generate values of type `Self`.
+    ///
+    /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
+    type Strategy: Strategy<Value = Self::ValueTree>;
 
     /// The type of [`ValueTree`] used for `Self`'s [`Strategy`].
     ///
@@ -203,15 +200,6 @@ pub trait Arbitrary<'a>: Sized + Debug {
     /// [`ValueTree`]: ../proptest/strategy/trait.ValueTree.html
     /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
     type ValueTree: ValueTree<Value = Self>;
-
-    /// The type of [`Strategy`] used to generate values of type `Self`.
-    ///
-    /// **NOTE:**
-    /// This type should **NOT** be relied upon outside of this crate
-    /// other than for implementing `Arbitrary` for other types.
-    ///
-    /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
-    type Strategy: Strategy<Value = Self::ValueTree>;
 }
 
 /// `StrategyFor` allows you to mention the type of [`Strategy`] for the input
@@ -284,8 +272,6 @@ pub type ParamsFor<A> = ParamsType<'static, A>;
 /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
 pub type ParamsType<'a, A> = <A as Arbitrary<'a>>::Parameters;
 
-/*
-
 /// Generates a [`Strategy`] producing [`Arbitrary`] values of `A`.
 /// Works better with type inference than [`any::<A>()`].
 ///
@@ -293,10 +279,12 @@ pub type ParamsType<'a, A> = <A as Arbitrary<'a>>::Parameters;
 /// parameters explicitly. This can have a positive effect on type inference.
 /// However, if you want specify `A`, you should use [`any::<A>()`] instead.
 ///
+/// For clarity, it is often a good idea to specify the type generated, and
+/// so using [`any::<A>()`] can be a good idea.
+///
 /// If you want to customize how the strategy is generated, use
-/// [`arbitrary_with(args)`] where `args` are any arguments accepted by
-/// `<A as Arbitrary>::Parameters` or any type `X` where
-/// `<A as Arbitrary>::Parameters: From<X>`.
+/// [`arbitrary_with(args)`] where `args` is of type
+/// `<A as Arbitrary>::Parameters`.
 ///
 /// # Example
 ///
@@ -329,12 +317,15 @@ where
 
 /// Generates a [`Strategy`] producing [`Arbitrary`] values of `A` with the
 /// given configuration arguments passed in `args`.
-/// Works better with type inference than [`any_with::<A, _>(args)`].
+/// Works better with type inference than [`any_with::<A>(args)`].
 ///
 /// With this version, you shouldn't need to specify any of the (many) type
 /// parameters explicitly. This can have a positive effect on type inference.
 /// However, if you want specify `A`, you should use
-/// [`any_with::<A, _>(args)`] instead.
+/// [`any_with::<A>(args)`] instead.
+///
+/// For clarity, it is often a good idea to specify the type generated, and
+/// so using [`any::<A>()`] can be a good idea.
 ///
 /// If you don't want to specify any arguments and instead use the default
 /// behavior, you should use [`arbitrary()`].
@@ -354,7 +345,7 @@ where
 /// # fn main() {}
 /// ```
 ///
-/// [`any_with::<A, _>(args)`]: fn.any_with.html
+/// [`any_with::<A>(args)`]: fn.any_with.html
 /// [`arbitrary()`]: fn.arbitrary.html
 /// [`Arbitrary`]: trait.Arbitrary.html
 /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
@@ -368,10 +359,9 @@ where
     A::arbitrary_with(args)
 }
 
-*/
-
 /// Generates a [`Strategy`] producing [`Arbitrary`] values of `A`.
 /// Unlike [`arbitrary`], it should be used for being explicit on what `A` is.
+/// For clarity, this may be a good idea.
 ///
 /// Use this version instead of [`arbitrary`] if you want to be clear which
 /// type you want to generate a `Strategy` for, or if you don't have an anchoring
@@ -407,6 +397,7 @@ pub fn any<'a, A: Arbitrary<'a>>() -> StrategyType<'a, A> {
 /// Generates a [`Strategy`] producing [`Arbitrary`] values of `A` with the
 /// given configuration arguments passed in `args`. Unlike [`arbitrary_with`],
 /// it should be used for being explicit on what `A` is.
+/// For clarity, this may be a good idea.
 ///
 /// Use this version instead of [`arbitrary_with`] if you want to be clear which
 /// type you want to generate a `Strategy` for, or if you don't have an anchoring
@@ -437,8 +428,6 @@ pub fn any_with<'a, A: Arbitrary<'a>>(args: A::Parameters)
     -> StrategyType<'a, A> {
     A::arbitrary_with(args)
 }
-
-/*
 
 /// Generates a [`Strategy`] producing [`Arbitrary`] values of `A`.
 /// This version boxes the `Strategy`, and thus you needn't specify `A`.
@@ -471,7 +460,7 @@ pub fn any_with<'a, A: Arbitrary<'a>>(args: A::Parameters)
 pub fn box_any<A>() -> BoxedStrategy<A>
 where
     A: Arbitrary<'static> + 'static,
-    StrategyFor<A>: 'static,
+    A::Strategy: 'static,
 {
     any::<A>().boxed()
 }
@@ -507,12 +496,82 @@ where
 pub fn box_any_with<A>(args: A::Parameters) -> BoxedStrategy<A>
 where
     A: Arbitrary<'static> + 'static,
-    StrategyFor<A>: 'static,
+    A::Strategy: 'static,
 {
     any_with::<A>(args).boxed()
 }
 
-*/
+/// Generates a [`Strategy`] producing [`Arbitrary`] values of `A`.
+/// This version boxes the `Strategy`, and thus you needn't specify `A`.
+///
+/// If you want to customize how the strategy is generated, use
+/// [`sbox_any_with(args)`] where `args` are any arguments accepted by
+/// the `Arbitrary` impl in question.
+///
+/// # Example
+///
+/// The function can be used as:
+///
+/// ```rust
+/// extern crate proptest;
+/// extern crate proptest_arbitrary;
+///
+/// use proptest::strategy::SBoxedStrategy;
+/// use proptest_arbitrary::sbox_any;
+///
+/// fn gen_bool(x: bool) -> SBoxedStrategy<bool> {
+///     sbox_any()
+/// }
+///
+/// # fn main() {}
+/// ```
+///
+/// [`sbox_any_with(args)`]: fn.sbox_any_with.html
+/// [`Arbitrary`]: trait.Arbitrary.html
+/// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
+pub fn sbox_any<A>() -> SBoxedStrategy<A>
+where
+    A: Arbitrary<'static> + 'static,
+    A::Strategy: Send + Sync,
+{
+    any::<A>().sboxed()
+}
+
+/// Generates a [`Strategy`] producing [`Arbitrary`] values of `A` with the
+/// given configuration arguments passed in `args`.
+/// This version boxes the `Strategy`, and thus you needn't specify `A`.
+///
+/// If you don't want to specify any arguments and instead use the default
+/// behavior, you should use [`box_any::<A>()`].
+///
+/// # Example
+///
+/// The function can be used as:
+///
+/// ```rust
+/// extern crate proptest;
+/// extern crate proptest_arbitrary;
+///
+/// use proptest::strategy::SBoxedStrategy;
+/// use proptest_arbitrary::sbox_any_with;
+///
+/// fn gen_bool(x: bool) -> SBoxedStrategy<bool> {
+///     sbox_any_with(())
+/// }
+///
+/// # fn main() {}
+/// ```
+///
+/// [`sbox_any::<A>()`]: fn.sbox_any.html
+/// [`Arbitrary`]: trait.Arbitrary.html
+/// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
+pub fn sbox_any_with<A>(args: A::Parameters) -> SBoxedStrategy<A>
+where
+    A: Arbitrary<'static> + 'static,
+    A::Strategy: Send + Sync,
+{
+    any_with::<A>(args).sboxed()
+}
 
 //==============================================================================
 // Modules:
@@ -522,7 +581,7 @@ where
 mod macros;
 mod utils;
 use utils::*;
-pub use utils::{Mapped, FMapped, SMapped};
+pub use utils::{Mapped, FMapped as MappedF, SMapped as MappedS};
 use extras::*;
 mod extras;
 

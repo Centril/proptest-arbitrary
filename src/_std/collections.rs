@@ -15,7 +15,6 @@ use std::sync::Arc;
 use std::collections::*;
 
 use proptest::collection::*;
-use proptest::strategy::{Just, TupleUnion};
 
 //==============================================================================
 // Macros:

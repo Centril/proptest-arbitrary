@@ -19,4 +19,5 @@ arbitrary_for!([A: Arbitrary<'a>] opt::IntoIter<A>,
     SMapped<'a, Option<A>, Self>, <Option<A> as Arbitrary<'a>>::Parameters,
     args => any_with_smap(args, Option::into_iter));
 
+#[cfg(feature = "nightly")]
 impl_just!(opt::NoneError, opt::NoneError);
