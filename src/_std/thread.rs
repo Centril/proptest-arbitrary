@@ -3,11 +3,8 @@ use std::thread::*;
 use std::time::Duration;
 
 arbitrary!(Builder, SMapped<'a, (Option<usize>, Option<String>), Self>; {
-    let prob = Probability::from(0.7);
-    let args = product_pack![
-        product_pack![prob, ()],
-        product_pack![prob, default()]
-    ];
+    let prob = prob(0.7);
+    let args = prob.llift().lwith(prob.llift());
     any_with_smap(args, |(os, on)| {
         let mut b = Builder::new();
         b = if let Some(size) = os { b.stack_size(size) } else { b };
@@ -22,8 +19,8 @@ arbitrary!(Builder, SMapped<'a, (Option<usize>, Option<String>), Self>; {
 arbitrary!([A: 'static + Send + Arbitrary<'a>] JoinHandle<A>,
     SMapped<'a, (A, Option<()>, u8), Self>, A::Parameters;
     args => {
-        let prob  = Probability::from(0.1);
-        let args2 = product_pack![args, product_pack![prob, ()], ()];
+        let prob  = prob(0.1);
+        let args2 = product_pack![args, prob.llift(), ()];
         any_with_smap(args2, |(val, panic, sleep)| thread::spawn(move || {
             // Sleep a random amount:
             thread::sleep(Duration::from_millis(sleep as u64));

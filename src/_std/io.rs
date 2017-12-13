@@ -10,16 +10,13 @@ macro_rules! buffer {
         arbitrary!(
             [A: Arbitrary<'a> + $bound] $type<A>,
             SMapped<'a, (A, Option<u16>), Self>, A::Parameters;
-            args => {
-                let args2 = product_pack![args, default()];
-                any_with_smap(args2, |(inner, cap)|
-                    if let Some(cap) = cap {
-                        $type::with_capacity(cap as usize, inner)
-                    } else {
-                        $type::new(inner)
-                    }
-                )
-            }
+            args => any_with_smap(args.llift(), |(inner, cap)|
+                if let Some(cap) = cap {
+                    $type::with_capacity(cap as usize, inner)
+                } else {
+                    $type::new(inner)
+                }
+            )
         );
     };
 }
@@ -51,13 +48,13 @@ arbitrary!(Repeat, SMapped<'a, u8, Self>; any_with_smap((), repeat));
 arbitrary!(
     [A: BufRead + Arbitrary<'a>] Split<A>,
     SMapped<'a, (A, u8), Self>, A::Parameters;
-    args => any_with_smap(product_pack![args, ()], |(a, b)| a.split(b))
+    args => any_with_smap(args.llift(), |(a, b)| a.split(b))
 );
 
 arbitrary!(
     [A: Read + Arbitrary<'a>] Take<A>,
     SMapped<'a, (A, u64), Self>, A::Parameters;
-    args => any_with_smap(product_pack![args, ()], |(a, b)| a.take(b))
+    args => any_with_smap(args.llift(), |(a, b)| a.take(b))
 );
 
 #[cfg(feature = "nightly")]
