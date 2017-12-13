@@ -11,7 +11,9 @@
 //!
 //! Proptest is a property testing framework (i.e., the [`QuickCheck`] family)
 //! inspired by the [Hypothesis](http://hypothesis.works/) framework for
-//! Python. This crate, `proptest-arbitrary`, additionally provides an
+//! Python.
+//!
+//! This crate, `proptest-arbitrary`, additionally provides an
 //! [`Arbitrary`] trait which allows you to have a canonical [`Strategy`]
 //! per type. This is the equivalent of [Haskell QuickCheck's implementation
 //! of `Arbitrary`]. In this interpretation of `Arbitrary`, `Strategy` is the
@@ -19,14 +21,8 @@
 //!
 //! Arbitrary is currently implemented as:
 //!
-//! ```rust
-//! # extern crate proptest;
-//! # use std::fmt::Debug;
-//! # use proptest::strategy::{Strategy, ValueTree};
-//!
-//! /// Arbitrary determines a canonical Strategy for the implementing type [..]
-//! ///
-//! /// [..]
+//! ```rust, ignore
+//! /// Arbitrary determines a canonical Strategy [..]
 //! pub trait Arbitrary<'a> : Sized + Debug {
 //!    fn arbitrary() -> Self::Strategy {
 //!        Self::arbitrary_with(Default::default())
@@ -44,8 +40,6 @@
 //!     type ValueTree: ValueTree<Value = Self>;
 //!
 //! }
-//!
-//! # fn main() {}
 //! ```
 //!
 //! <!-- NOREADME
@@ -159,9 +153,16 @@ use proptest::strategy::*;
 /// In this interpretation of `Arbitray`, `Strategy` is the equivalent of
 /// the `Gen` monad.
 ///
+/// `Arbitrary` currently only works for types which represent owned data as
+/// opposed to borrowed data. This is a fundamental restriction of `proptest`
+/// which may be lifted in the future as the [generic associated types (GAT)]
+/// feature of Rust is implemented and stabilized.
+///
+/// [generic associated types (GAT)]: https://github.com/rust-lang/rust/issues/44265
+///
 /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
 ///
-/// [HaskellQC]
+/// [HaskellQC]:
 /// https://hackage.haskell.org/package/QuickCheck/docs/Test-QuickCheck-Arbitrary.html
 pub trait Arbitrary<'a>: Sized + Debug {
     // Unfortunately, Generic Associated Types won't be in stable for some time.
