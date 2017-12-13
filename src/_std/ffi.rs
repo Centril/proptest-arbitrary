@@ -1,8 +1,6 @@
 use super::*;
 use std::ffi;
 use std::ops::Range;
-use std::rc::Rc;
-use std::sync::Arc;
 use proptest::collection::{VecStrategy, vec};
 use _std::string::not_utf8_bytes;
 
@@ -34,6 +32,10 @@ macro_rules! dst_wrapped {
 
 dst_wrapped!(Box);
 
+#[cfg(MIN_VER_1_24_0)]
+use std::rc::Rc;
+#[cfg(MIN_VER_1_24_0)]
+use std::sync::Arc;
 #[cfg(MIN_VER_1_24_0)]
 dst_wrapped!(Rc, Arc);
 
