@@ -2,11 +2,11 @@
 
 use std::cell::{Cell, RefCell, UnsafeCell, BorrowError, BorrowMutError};
 
-impl_wrap_from!([Copy] Cell);
-impl_wrap_from!([] RefCell);
-impl_wrap_from!([] UnsafeCell);
+wrap_from!([Copy] Cell);
+wrap_from!(RefCell);
+wrap_from!(UnsafeCell);
 
-gen_strat!(BorrowError, || {
+generator!(BorrowError, || {
     // False positive:
     #[cfg_attr(feature = "cargo-clippy", allow(let_and_return))]
     {
@@ -20,7 +20,7 @@ gen_strat!(BorrowError, || {
         ret
     }
 });
-gen_strat!(BorrowMutError, || {
+generator!(BorrowMutError, || {
     // False positive:
     #[cfg_attr(feature = "cargo-clippy", allow(let_and_return))]
     {

@@ -1,14 +1,16 @@
 use super::*;
 use std::time::*;
 
-impl_arbitrary!(Duration, SMapped<'a, (u64, u32), Self>,
+arbitrary!(Duration, SMapped<'a, (u64, u32), Self>;
     static_map(any::<(u64, u32)>(), |(a, b)| Duration::new(a, b))
 );
 
 // Instant::now() "never" returns the same Instant, so no shrinking may occur!
-impl_just!(Instant, Instant::now());
+arbitrary!(Instant; Self::now());
+
 // Same for SystemTime.
-impl_just!(SystemTime, SystemTime::now());
+arbitrary!(SystemTime; Self::now());
+
 /*
 A possible logic for SystemTimeError:
 fn gen_ste() -> SystemTimeError {

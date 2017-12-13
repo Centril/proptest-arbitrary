@@ -5,21 +5,29 @@ use super::*;
 use std::ops::{Add, Range, RangeTo};
 use proptest::num::f64;
 
-macro_rules! default {
-    ($type: ty, $val: expr) => {
-        impl Default for $type {
-            fn default() -> Self { $val.into() }
-        }
-    };
-}
-
 //==============================================================================
 // Probability, default = 0.5.
 //==============================================================================
 
 default!(Probability, 0.5);
 
+/// Creates a `Probability` from some value that is convertible into it.
+///
+/// # Safety
+///
+/// Panics if the converted to probability would lie
+/// outside interval `[0.0, 1.0]`. Consult the `Into` (or `From`)
+/// implementation for more details.
+pub fn prob<X: Into<Probability>>(from: X) -> Probability {
+    from.into()
+}
+
 impl From<f64> for Probability {
+    /// Creates a `Probability` from a `f64`.
+    /// 
+    /// # Safety
+    ///
+    /// Panics if the probability is outside interval `[0.0, 1.0]`.
     fn from(prob: f64) -> Self {
         Probability::new(prob)
     }
@@ -30,22 +38,37 @@ impl Probability {
     /// 
     /// # Safety
     ///
-    /// Panics if prob is outside interval `[0.0, 1.0]`
+    /// Panics if the probability is outside interval `[0.0, 1.0]`.
     pub fn new(prob: f64) -> Self {
         assert!(prob >= 0.0 && prob <= 1.0);
         Probability(prob)
     }
 }
 
-impl_arbitrary!(Probability, SFnPtrMap<Range<f64>, Self>, {
-    static_map((0.0..1.0), Probability::new)
-});
+arbitrary!(Probability, FromMapStrategy<Range<f64>, Self>;
+    from_map_strategy(0.0..1.0)
+);
 
-/// A probability in the range `[0.0, 1.0]` with default `0.5`.
-#[derive(Clone, Copy, PartialEq, Debug, Into,
-         Add, Sub, AddAssign, SubAssign, Mul, Div, Rem, Shr, Shl,
-         MulAssign, DivAssign, RemAssign, ShrAssign, ShlAssign)]
-#[cfg_attr(feature = "frunk", derive(Generic))]
+#[cfg(feature = "frunk")]
+use frunk_core::generic::Generic;
+
+#[cfg(feature = "frunk")]
+impl Generic for Probability {
+    type Repr = f64;
+
+    /// Converts the `Probability` into an `f64`.
+    fn into(self) -> Self::Repr { self.0 }
+
+    /// Creates a `Probability` from a `f64`.
+    /// 
+    /// # Safety
+    ///
+    /// Panics if the probability is outside interval `[0.0, 1.0]`.
+    fn from(r: Self::Repr) -> Self { prob(r) }
+}
+
+/// A probability in the range `[0.0, 1.0]` with a default of `0.5`.
+#[derive(Clone, Copy, PartialEq, Debug, Into)]
 pub struct Probability(f64);
 
 //==============================================================================
@@ -54,7 +77,10 @@ pub struct Probability(f64);
 
 default!(SizeBounds, 0..100);
 
-type U2 = (usize, usize);
+/// Creates a `SizeBounds` from some value that is convertible into it.
+pub fn size_bounds<X: Into<SizeBounds>>(from: X) -> SizeBounds {
+    from.into()
+}
 
 impl SizeBounds {
     /// Creates a `SizeBounds` from a `Range<usize>`.
@@ -62,35 +88,41 @@ impl SizeBounds {
         SizeBounds(range)
     }
 
-    pub (crate) fn and<X>(self, and: X) -> (Self, X) {
-        (self, and)
+    /// Merges this size-bounds together with some other argument
+    /// producing a product type expected by some impelementations of
+    /// `A: Arbitrary<'a>` in `A::Parameters`. This can be more ergonomic
+    /// to work with and may help type inference.
+    pub fn and<X>(self, and: X) -> product_type![Self, X] {
+        product_pack![self, and]
+    }
+
+    /// Merges this size-bounds together with some other argument generated
+    /// with a default value producing a product type expected by some
+    /// impelementations of `A: Arbitrary<'a>` in `A::Parameters`. This can
+    /// be more ergonomic to work with and may help type inference.
+    pub fn lift<X: Default>(self) -> product_type![Self, X] {
+        self.and(default())
     }
 }
 
-pub (crate) fn size_bounds<X>(from: X) -> SizeBounds
-where
-    SizeBounds: From<X> {
-    SizeBounds::from(from)
-}
-
 /// Given `(low: usize, high: usize)`, then a range `[low..high)` is the result.
-impl From<U2> for SizeBounds {
-    fn from(x: U2) -> Self {
+impl From<(usize, usize)> for SizeBounds {
+    fn from(x: (usize, usize)) -> Self {
         (x.0..x.1).into()
     }
 }
 
 /// Given `exact`, then a range `[exact..exact + 1)` is the result.
 impl From<usize> for SizeBounds {
-    fn from(high: usize) -> Self {
-        (high, high + 1).into()
+    fn from(exact: usize) -> Self {
+        size_bounds(exact..exact + 1)
     }
 }
 
 /// Given `..high`, then a range `[0..high)` is the result.
 impl From<RangeTo<usize>> for SizeBounds {
     fn from(high: RangeTo<usize>) -> Self {
-        (0, high.end).into()
+        size_bounds(0..high.end)
     }
 }
 
@@ -99,17 +131,14 @@ impl Add<usize> for SizeBounds {
     type Output = SizeBounds;
 
     fn add(self, rhs: usize) -> Self::Output {
-        let Range { start, end } = self.into();
-        Range {
-            start: start + rhs,
-            end: end + rhs
-        }.into()
+        let Range { start, end } = self.0;
+        size_bounds((start + rhs)..(end + rhs))
     }
 }
 
-impl_arbitrary!(SizeBounds, SMapped<'a, U2, Self>, {
-    static_map(any::<U2>(), <SizeBounds as From<U2>>::from)
-});
+arbitrary!(SizeBounds, FMapped<'a, Range<usize>, Self>;
+    any_sinto::<Range<usize>, _>()
+);
 
 /// The minimum and maximum bounds on the size of a collection.
 /// The interval must form a subset of `[0, std::usize::MAX)`.

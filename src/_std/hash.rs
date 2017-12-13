@@ -2,13 +2,9 @@ use super::*;
 use std::hash::{BuildHasherDefault, Hasher};
 use std::collections::hash_map::{DefaultHasher, RandomState};
 
-arbitrary_for!(
-    [H: Default + Hasher] // over-constrain on purpose!
-    BuildHasherDefault<H>, Just<Self>, (),
-    _a => Just(BuildHasherDefault::default()));
-
 // NOTE: don't impl for std::hash::SipHasher.. since deprecated!
 
-gen_strat!(
-    DefaultHasher, DefaultHasher::default;
-    RandomState, RandomState::default);
+// over-constrain on purpose!
+arbitrary!([H: Default + Hasher] BuildHasherDefault<H>; default());
+
+generator!(DefaultHasher, default; RandomState, default);

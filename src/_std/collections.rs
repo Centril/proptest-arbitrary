@@ -28,8 +28,8 @@ type RangedParams2<A, B> = product_type![SizeBounds, A, B];
 
 macro_rules! impl_1 {
     ($typ: ident, $strat: ident, $($bound : path),* => $fun: ident) => {
-        arbitrary_for!([A: Arbitrary<'a> $(+ $bound)*] $typ<A>,
-            $strat<A::Strategy>, RangedParams1<A::Parameters>,
+        arbitrary!([A: Arbitrary<'a> $(+ $bound)*] $typ<A>,
+            $strat<A::Strategy>, RangedParams1<A::Parameters>;
             args => {
                 let product_unpack![range, a] = args;
                 $fun(any_with::<A>(a), range.into())
@@ -39,9 +39,9 @@ macro_rules! impl_1 {
 
 macro_rules! impl_2 {
     ($typ: ident, $strat: ident, $($bound : path),* => $fun: ident) => {
-        arbitrary_for!([A: Arbitrary<'a> $(+ $bound)*, B: Arbitrary<'a>]
+        arbitrary!([A: Arbitrary<'a> $(+ $bound)*, B: Arbitrary<'a>]
             $typ<A, B>, $strat<A::Strategy, B::Strategy>,
-            RangedParams2<A::Parameters, B::Parameters>,
+            RangedParams2<A::Parameters, B::Parameters>;
             args => {
                 let product_unpack![range, a, b] = args;
                 $fun(any_with::<A>(a), any_with::<B>(b), range.into())
@@ -55,8 +55,8 @@ macro_rules! impl_2 {
 
 macro_rules! dst_wrapped {
     ($($w: ident),*) => {
-        $(arbitrary_for!([A: Arbitrary<'a>] $w<[A]>,
-            FMapped<'a, Vec<A>, Self>, <Vec<A> as Arbitrary<'a>>::Parameters,
+        $(arbitrary!([A: Arbitrary<'a>] $w<[A]>,
+            FMapped<'a, Vec<A>, Self>, <Vec<A> as Arbitrary<'a>>::Parameters;
             a => any_with_sinto::<Vec<A>, _>(a)
         );)*
     };
@@ -97,20 +97,20 @@ where
 
 macro_rules! into_iter_1 {
     ($module: ident, $type: ident $(, $bound : path)*) => {
-        arbitrary_for!([A: Arbitrary<'a> $(+ $bound)*]
+        arbitrary!([A: Arbitrary<'a> $(+ $bound)*]
             $module::IntoIter<A>,
             SMapped<'a, $type<A>, Self>,
-            <$type<A> as Arbitrary<'a>>::Parameters,
+            <$type<A> as Arbitrary<'a>>::Parameters;
             args => any_with_smap(args, $type::into_iter));
     };
 }
 
 macro_rules! into_iter_2 {
     ($module: ident, $type: ident $(, $bound : path)*) => {
-        arbitrary_for!([A: Arbitrary<'a> $(+ $bound)*, B: Arbitrary<'a>]
+        arbitrary!([A: Arbitrary<'a> $(+ $bound)*, B: Arbitrary<'a>]
             $module::IntoIter<A, B>,
             SMapped<'a, $type<A, B>, Self>,
-            <$type<A, B> as Arbitrary<'a>>::Parameters,
+            <$type<A, B> as Arbitrary<'a>>::Parameters;
             args => any_with_smap(args, $type::into_iter));
     };
 }

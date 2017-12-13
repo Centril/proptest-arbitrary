@@ -86,9 +86,8 @@ macro_rules! impl_bits {
                 fn from(x: Bits<Self>) -> Self { x.0 }
             }
 
-            arbitrary_for!([] Bits<$typ>,
-                FromMapStrategy<BitSetStrategy<$typ>, Self>,
-                BitsParams<$typ>,
+            arbitrary!(Bits<$typ>, FromMapStrategy<BitSetStrategy<$typ>, Self>,
+                BitsParams<$typ>;
                 args => from_map_strategy(match args {
                     Ranged(r) => BitSetStrategy::new(r.start, r.end),
                     Masked(m) => BitSetStrategy::masked(m),

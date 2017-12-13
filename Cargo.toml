@@ -15,6 +15,11 @@ description = """
 The Arbitrary trait for proptest and implementations for the standard library.
 """
 
+build = "build.rs"
+
+[build-dependencies]
+version_check = "0.1"
+
 [badges]
 
 maintenance = { status = "experimental" }

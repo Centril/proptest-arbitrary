@@ -4,7 +4,7 @@ use std::iter::once;
 use std::ffi::OsString;
 use proptest::collection::vec;
 
-gen_strat!(
+generator!(
     Args, args;
     ArgsOs, args_os;
     Vars, vars;
@@ -72,11 +72,11 @@ fn osstring_invalid_string() -> BoxedStrategy<OsString> {
     not_utf8_bytes().prop_map(OsString::from_vec).boxed()
 }
 
-impl_arbitrary!(VarError,
+arbitrary!(VarError,
     TupleUnion<(
         W<Just<Self>>,
         W<SFnPtrMap<BoxedStrategy<OsString>, Self>>
-    )>,
+    )>;
     prop_oneof![
         Just(VarError::NotPresent),
         static_map(osstring_invalid_string(), VarError::NotUnicode)

@@ -6,8 +6,8 @@ use std::sync::Arc;
 use proptest::collection::{VecStrategy, vec};
 use _std::string::not_utf8_bytes;
 
-arbitrary_for!([] ffi::CString,
-    SFnPtrMap<VecStrategy<Range<u8>>, Self>, SizeBounds,
+arbitrary!(ffi::CString,
+    SFnPtrMap<VecStrategy<Range<u8>>, Self>, SizeBounds;
     args => static_map(vec(1..std::u8::MAX, (args + 1).into()), |mut vec| {
         vec.pop().unwrap();
         // Could use: Self::from_vec_unchecked(vec) safely.
@@ -15,26 +15,29 @@ arbitrary_for!([] ffi::CString,
     })
 );
 
-arbitrary_for!([] ffi::OsString, FMapped<'a, String, Self>,
-    <String as Arbitrary<'a>>::Parameters, a => any_with_sinto::<String, _>(a)
+arbitrary!(ffi::OsString, FMapped<'a, String, Self>,
+    <String as Arbitrary<'a>>::Parameters; a => any_with_sinto::<String, _>(a)
 );
 
 macro_rules! dst_wrapped {
     ($($w: ident),*) => {
-        $(arbitrary_for!([] $w<ffi::CStr>,
-            FMapped<'a, ffi::CString, Self>, SizeBounds,
+        $(arbitrary!($w<ffi::CStr>,
+            FMapped<'a, ffi::CString, Self>, SizeBounds;
             a => any_with_sinto::<ffi::CString, _>(a)
         );)*
-        $(arbitrary_for!([] $w<ffi::OsStr>, FMapped<'a, ffi::OsString, Self>,
-            <String as Arbitrary<'a>>::Parameters,
+        $(arbitrary!($w<ffi::OsStr>, FMapped<'a, ffi::OsString, Self>,
+            <String as Arbitrary<'a>>::Parameters;
             a => any_with_sinto::<ffi::OsString, _>(a)
         );)*
     };
 }
 
-dst_wrapped!(Box, Rc, Arc);
+dst_wrapped!(Box);
 
-impl_arbitrary!(ffi::FromBytesWithNulError, SMapped<'a, Option<u16>, Self>, {
+#[cfg(MIN_VER_1_24_0)]
+dst_wrapped!(Rc, Arc);
+
+arbitrary!(ffi::FromBytesWithNulError, SMapped<'a, Option<u16>, Self>; {
     static_map(any::<Option<u16>>(), |opt_pos| {
         // We make some assumptions about the internal structure of
         // ffi::FromBytesWithNulError. However, these assumptions do not
@@ -53,7 +56,7 @@ impl_arbitrary!(ffi::FromBytesWithNulError, SMapped<'a, Option<u16>, Self>, {
     })
 });
 
-impl_arbitrary!(ffi::IntoStringError, SFnPtrMap<BoxedStrategy<Vec<u8>>, Self>,
+arbitrary!(ffi::IntoStringError, SFnPtrMap<BoxedStrategy<Vec<u8>>, Self>;
     static_map(not_utf8_bytes(), |bytes|
         ffi::CString::new(bytes).unwrap().into_string().unwrap_err()
     )

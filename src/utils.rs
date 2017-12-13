@@ -11,7 +11,7 @@ pub (crate) use proptest::strategy::statics::{
     //FilterFn as SFilterFn,
 };
 
-pub (super) fn any_with_map<'a, A, B, F>(args: A::Parameters, fun: F)
+pub (crate) fn any_with_map<'a, A, B, F>(args: A::Parameters, fun: F)
     -> Map<StrategyType<'a, A>, F>
 where
     A: Arbitrary<'a>,
@@ -21,7 +21,7 @@ where
     any_with::<A>(args).prop_map(fun)
 }
 
-pub (super) fn any_with_sinto<'a, A, B>(args: A::Parameters)
+pub (crate) fn any_with_sinto<'a, A, B>(args: A::Parameters)
     -> FMapped<'a, A, B>
 where A: Arbitrary<'a>,
       B: Debug + From<A>
@@ -29,7 +29,7 @@ where A: Arbitrary<'a>,
     from_map_strategy(any_with::<A>(args))
 }
 
-pub (super) fn any_sinto<'a, A, B>()
+pub (crate) fn any_sinto<'a, A, B>()
     -> FMapped<'a, A, B>
 where A: Arbitrary<'a>,
       B: Debug + From<A>
@@ -37,7 +37,7 @@ where A: Arbitrary<'a>,
     from_map_strategy(any::<A>())
 }
 
-pub (super) fn any_with_smap<'a, A, B>(args: A::Parameters, fun: fn(A) -> B)
+pub (crate) fn any_with_smap<'a, A, B>(args: A::Parameters, fun: fn(A) -> B)
     -> SMapped<'a, A, B>
 where
     A: Arbitrary<'a>,
@@ -45,6 +45,8 @@ where
 {
     static_map(any_with::<A>(args), fun)
 }
+
+pub (crate) fn default<D: Default>() -> D { D::default() }
 
 
 /*
@@ -86,7 +88,7 @@ impl<I, O> Default for FromMapper<I, O> {
 }
 
 impl<I, O> Clone for FromMapper<I, O> {
-    fn clone(&self) -> Self { Self::default() }
+    fn clone(&self) -> Self { default() }
 }
 
 impl<I, O: From<I> + Debug> SMapFn<I> for FromMapper<I, O> {
@@ -101,7 +103,7 @@ pub(crate) type FromMapStrategy<S, O> = SMap<S, FromMapper<ValueFor<S>, O>>;
 
 pub (crate) fn from_map_strategy<S: Strategy, O>(strat: S)
     -> FromMapStrategy<S, O> {
-    FromMapStrategy::new(strat, FromMapper::default())
+    FromMapStrategy::new(strat, default())
 }
 
 /// A map from a strategy of `I` to `O` using the `From` trait for conversion.

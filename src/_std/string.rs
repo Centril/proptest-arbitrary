@@ -36,8 +36,7 @@ impl<'a> Arbitrary<'a> for String {
 
 macro_rules! dst_wrapped {
     ($($w: ident),*) => {
-        $(arbitrary_for!([] $w<str>,
-            FMapped<'a, String, Self>, StringParameter<'a>,
+        $(arbitrary!($w<str>, FMapped<'a, String, Self>, StringParameter<'a>;
             a => any_with_sinto::<String, _>(a)
         );)*
     };
@@ -45,18 +44,17 @@ macro_rules! dst_wrapped {
 
 dst_wrapped!(Box, Rc, Arc);
 
-gen_strat!(FromUtf16Error, || String::from_utf16(&[0xD800]).unwrap_err());
-gen_strat!(ParseError, || panic!());
+generator!(FromUtf16Error, || String::from_utf16(&[0xD800]).unwrap_err());
+generator!(ParseError, || panic!());
 
-impl_arbitrary!(FromUtf8Error,
-    SFnPtrMap<BoxedStrategy<Vec<u8>>, Self>,    
+arbitrary!(FromUtf8Error, SFnPtrMap<BoxedStrategy<Vec<u8>>, Self>;
     static_map(not_utf8_bytes(), |bytes| String::from_utf8(bytes).unwrap_err())
 );
 
 pub(crate) fn not_utf8_bytes() -> BoxedStrategy<Vec<u8>> {
     (any::<u16>(), gen_el_bytes()).prop_flat_map(|(valid_up_to, el_bytes)| {
         let bounds: SizeBounds = (valid_up_to as usize).into();
-        let args = product_pack![bounds, Default::default()];
+        let args = product_pack![bounds, default()];
         any_with_map(args, move |p: Vec<char>| {
             let mut bytes = p.iter().collect::<String>().into_bytes();
             bytes.extend(el_bytes.into_iter());

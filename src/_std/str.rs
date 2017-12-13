@@ -2,7 +2,7 @@ use super::*;
 use std::iter::repeat;
 use std::str::{ParseBoolError, Utf8Error, from_utf8};
 
-impl_just!(ParseBoolError, "".parse::<bool>().unwrap_err());
+arbitrary!(ParseBoolError; "".parse::<bool>().unwrap_err());
 
 type ELSeq  = W<Just<&'static [u8]>>;
 type ELSeqs = TupleUnion<(ELSeq, ELSeq, ELSeq, ELSeq)>;
@@ -16,8 +16,7 @@ fn gen_el_seqs() -> ELSeqs {
     ]
 }
 
-impl_arbitrary!(Utf8Error,
-    SFnPtrMap<(StrategyType<'a, u16>, ELSeqs), Utf8Error>,
+arbitrary!(Utf8Error, SFnPtrMap<(StrategyType<'a, u16>, ELSeqs), Utf8Error>;
     static_map((any::<u16>(), gen_el_seqs()), |(vut, elseq)| {
         let v = repeat(b'_').take(vut as usize)
                     .chain(elseq.iter().cloned())

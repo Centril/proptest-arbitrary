@@ -2,6 +2,14 @@
 // Macros for quick implementing:
 //==============================================================================
 
+macro_rules! default {
+    ($type: ty, $val: expr) => {
+        impl Default for $type {
+            fn default() -> Self { $val.into() }
+        }
+    };
+}
+
 macro_rules! valuetree {
     () => {
         type ValueTree =
@@ -9,10 +17,10 @@ macro_rules! valuetree {
     };
 }
 
-macro_rules! arbitrary_for {
-    ([$($bound : tt)*] $typ: ty, $strat: ty, $params: ty,
+macro_rules! arbitrary {
+    ([$($bounds : tt)*] $typ: ty, $strat: ty, $params: ty;
         $args: ident => $logic: expr) => {
-        impl<'a, $($bound)*> $crate::Arbitrary<'a> for $typ {
+        impl<'a, $($bounds)*> $crate::Arbitrary<'a> for $typ {
             valuetree!();
             type Parameters = $params;
             type Strategy = $strat;
@@ -21,52 +29,62 @@ macro_rules! arbitrary_for {
             }
         }
     };
-}
-
-macro_rules! impl_arbitrary {
-    ($self: ty, $st: ty, $logic: expr) => {
-        arbitrary_for!([] $self, $st, (), _args => $logic);
+    ([$($bounds : tt)*] $typ: ty, $strat: ty; $logic: expr) => {
+        arbitrary!([$($bounds)*] $typ, $strat, (); _args => $logic);
+    };
+    ([$($bounds : tt)*] $strat: ty; $logic: expr) => {
+        arbitrary!([$($bounds)*] $strat,
+            $crate::proptest::strategy::Just<Self>, ();
+            _args => $crate::proptest::strategy::Just($logic)
+        );
+    };
+    ($typ: ty, $strat: ty, $params: ty; $args: ident => $logic: expr) => {
+        arbitrary!([] $typ, $strat, $params; $args => $logic);
+    };
+    ($typ: ty, $strat: ty; $logic: expr) => {
+        arbitrary!([] $typ, $strat; $logic);
+    };
+    ($strat: ty; $logic: expr) => {
+        arbitrary!([] $strat; $logic);
+    };
+    ($($typ: ident),*) => {
+        $(arbitrary!($typ, $typ::Any; $typ::ANY);)*
     };
 }
 
-macro_rules! impl_just {
-    ($self: ty, $logic: expr) => {
-        impl_arbitrary!($self,
-            $crate::proptest::strategy::Just<Self>,
-            $crate::proptest::strategy::Just($logic));
+macro_rules! wrap_ctor {
+    ($wrap: ident) => {
+        wrap_ctor!([] $wrap);
     };
-}
-
-macro_rules! impls {
-    ($($self: ident),*) => {
-        $(impl_arbitrary!($self, $self::Any, $self::ANY);)*
+    ($wrap: ident, $maker: expr) => {
+        wrap_ctor!([] $wrap, $maker);
     };
-}
-
-macro_rules! impl_wrap_gen {
     ([$($bound : tt)*] $wrap: ident) => {
-        impl_wrap_gen!([$($bound)*] $wrap, $wrap::new);
+        wrap_ctor!([$($bound)*] $wrap, $wrap::new);
     };
     ([$($bound : tt)*] $wrap: ident, $maker: expr) => {
-        arbitrary_for!([A: $crate::Arbitrary<'a> + $($bound)*] $wrap<A>,
-            $crate::SMapped<'a, A, Self>, A::Parameters,
+        arbitrary!([A: $crate::Arbitrary<'a> + $($bound)*] $wrap<A>,
+            $crate::SMapped<'a, A, Self>, A::Parameters;
             args => $crate::any_with_smap(args, $maker));
     };
 }
 
-macro_rules! impl_wrap_from {
+macro_rules! wrap_from {
+    ($wrap: ident) => {
+        wrap_from!([] $wrap);
+    };
     ([$($bound : tt)*] $wrap: ident) => {
-        arbitrary_for!([A: $crate::Arbitrary<'a> + $($bound)*] $wrap<A>,
-            $crate::FMapped<'a, A, Self>, A::Parameters,
+        arbitrary!([A: $crate::Arbitrary<'a> + $($bound)*] $wrap<A>,
+            $crate::FMapped<'a, A, Self>, A::Parameters;
             args => $crate::any_with_sinto::<A, $wrap<A>>(args));
     };
 }
 
-macro_rules! gen_strat {
+macro_rules! generator {
     ($($self: ty, $fun: expr);+) => {
         $(
-            impl_arbitrary!($self,
-                $crate::GenStrategy<Self>, $crate::GenStrategy::new($fun));
+            arbitrary!($self, $crate::GenStrategy<Self>;
+                $crate::GenStrategy::new($fun));
         )+
     };
 }
