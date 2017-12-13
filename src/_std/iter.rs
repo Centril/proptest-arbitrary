@@ -36,7 +36,7 @@ macro_rules! usize_mod {
     ($type: ident, $mapper: ident) => {
         arbitrary!([A: Arbitrary<'a> + Iterator] $type<A>,
             SMapped<'a, (A, usize), Self>, A::Parameters;
-            a => any_with_smap(a.llift(), |(a, b)| a.$mapper(b))
+            a => any_with_smap(product_pack![a, ()], |(a, b)| a.$mapper(b))
         );
     };
 }

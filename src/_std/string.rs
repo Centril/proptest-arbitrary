@@ -54,7 +54,7 @@ arbitrary!(FromUtf8Error, SFnPtrMap<BoxedStrategy<Vec<u8>>, Self>;
 pub(crate) fn not_utf8_bytes() -> BoxedStrategy<Vec<u8>> {
     (any::<u16>(), gen_el_bytes()).prop_flat_map(|(valid_up_to, el_bytes)| {
         let bounds: SizeBounds = (valid_up_to as usize).into();
-        any_with_map(bounds.llift(), move |p: Vec<char>| {
+        any_with_map(product_pack![bounds, default()], move |p: Vec<char>| {
             let mut bytes = p.iter().collect::<String>().into_bytes();
             bytes.extend(el_bytes.into_iter());
             bytes

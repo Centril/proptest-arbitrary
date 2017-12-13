@@ -23,15 +23,19 @@ impl_wrap_char!(ToUppercase,   char::to_uppercase);
 #[cfg(feature = "nightly")]
 arbitrary!(DecodeUtf8<<Vec<u8> as IntoIterator>::IntoIter>,
     Flatten<Mapped<'a, u16, SMapped<'a, Vec<u8>, Self>>>;
-    any::<u16>().prop_flat_map(|size|
-        any_with_smap(size_bounds(..size as usize).llift().into(), decode_utf8))
+    any::<u16>().prop_flat_map(|size| any_with_smap(
+        product_pack![size_bounds(..size as usize), default()].into(),
+        decode_utf8
+    ))
 );
 
 #[cfg(MIN_VER_1_24_0)]
 arbitrary!(DecodeUtf16<<Vec<u16> as IntoIterator>::IntoIter>,
     Flatten<Mapped<'a, u16, SMapped<'a, Vec<u16>, Self>>>;
-    any::<u16>().prop_flat_map(|size|
-        any_with_smap(size_bounds(..size as usize).llift().into(), decode_utf16))
+    any::<u16>().prop_flat_map(|size| any_with_smap(
+        product_pack![size_bounds(..size as usize), default()].into(),
+        decode_utf16
+    ))
 );
 
 arbitrary!(ParseCharError, IndFlatten<Mapped<'a, bool, Just<Self>>>;

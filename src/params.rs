@@ -5,42 +5,6 @@ use super::*;
 use std::ops::{Add, Range, RangeTo};
 use proptest::num::f64;
 
-pub (crate) trait Chainable: Sized {
-    /// Merges self together with some other argument producing a product
-    /// type expected by some impelementations of `A: Arbitrary<'a>` in
-    /// `A::Parameters`. This can be more ergonomic to work with and may
-    /// help type inference.
-    fn lwith<X>(self, and: X) -> product_type![Self, X] {
-        product_pack![self, and]
-    }
-
-    /// Merges self together with some other argument producing a product
-    /// type expected by some impelementations of `A: Arbitrary<'a>` in
-    /// `A::Parameters`. This can be more ergonomic to work with and may
-    /// help type inference.
-    fn rwith<X>(self, and: X) -> product_type![X, Self] {
-        product_pack![and, self]
-    }
-
-    /// Merges self together with some other argument generated with a
-    /// default value producing a product type expected by some
-    /// impelementations of `A: Arbitrary<'a>` in `A::Parameters`.
-    /// This can be more ergonomic to work with and may help type inference.
-    fn llift<X: Default>(self) -> product_type![Self, X] {
-        self.lwith(default())
-    }
-
-    /// Merges self together with some other argument generated with a
-    /// default value producing a product type expected by some
-    /// impelementations of `A: Arbitrary<'a>` in `A::Parameters`.
-    /// This can be more ergonomic to work with and may help type inference.
-    fn rlift<X: Default>(self) -> product_type![X, Self] {
-        self.rwith(default())
-    }
-}
-
-impl<T> Chainable for T {}
-
 //==============================================================================
 // Probability, default = 0.5.
 //==============================================================================
@@ -78,6 +42,24 @@ impl Probability {
     pub fn new(prob: f64) -> Self {
         assert!(prob >= 0.0 && prob <= 1.0);
         Probability(prob)
+    }
+
+    // Don't rely on these existing internally:
+
+    /// Merges self together with some other argument producing a product
+    /// type expected by some impelementations of `A: Arbitrary<'a>` in
+    /// `A::Parameters`. This can be more ergonomic to work with and may
+    /// help type inference.
+    pub fn with<X>(self, and: X) -> product_type![Self, X] {
+        product_pack![self, and]
+    }
+
+    /// Merges self together with some other argument generated with a
+    /// default value producing a product type expected by some
+    /// impelementations of `A: Arbitrary<'a>` in `A::Parameters`.
+    /// This can be more ergonomic to work with and may help type inference.
+    pub fn lift<X: Default>(self) -> product_type![Self, X] {
+        self.with(default())
     }
 }
 
@@ -122,6 +104,24 @@ impl SizeBounds {
     /// Creates a `SizeBounds` from a `Range<usize>`.
     pub fn new(range: Range<usize>) -> Self {
         SizeBounds(range)
+    }
+
+    // Don't rely on these existing internally:
+
+    /// Merges self together with some other argument producing a product
+    /// type expected by some impelementations of `A: Arbitrary<'a>` in
+    /// `A::Parameters`. This can be more ergonomic to work with and may
+    /// help type inference.
+    pub fn with<X>(self, and: X) -> product_type![Self, X] {
+        product_pack![self, and]
+    }
+
+    /// Merges self together with some other argument generated with a
+    /// default value producing a product type expected by some
+    /// impelementations of `A: Arbitrary<'a>` in `A::Parameters`.
+    /// This can be more ergonomic to work with and may help type inference.
+    pub fn lift<X: Default>(self) -> product_type![Self, X] {
+        self.with(default())
     }
 }
 
