@@ -27,7 +27,7 @@ type CowSlices<'a, T> = Cow<'a, [T]>;
 const WHOLE_RANGE: &[CharRange] = &[('\x00', ::std::char::MAX)];
 
 /// Equivalent to `proptest::char::ANY`.
-impl<'a> Default for CharParameters<'a> {
+impl<'a> Default for CharParam<'a> {
     fn default() -> Self {
         Self {
             special: Cow::Borrowed(char::DEFAULT_SPECIAL_CHARS),
@@ -40,12 +40,12 @@ impl<'a> Default for CharParameters<'a> {
 /// Parameters to pass to `proptest::char::CharStrategy::new(..)`.
 #[derive(Clone, PartialEq, Eq, Hash, Debug, From, Into)]
 #[cfg_attr(feature = "frunk", derive(Generic))]
-pub struct CharParameters<'a> {
+pub struct CharParam<'a> {
     special: CowSlices<'a, char>,
     preferred: CowSlices<'a, CharRange>,
     ranges: CowSlices<'a, CharRange>,
 }
 
-arbitrary!(char, char::CharStrategy<'a>, CharParameters<'a>; args => {
+arbitrary!(char, char::CharStrategy<'a>, CharParam<'a>; args => {
     char::CharStrategy::new(args.special, args.preferred, args.ranges)
 });

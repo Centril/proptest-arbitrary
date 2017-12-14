@@ -8,11 +8,11 @@ use std::ops::Range;
 use proptest::bits::{BitSetLike, BitSetStrategy};
 use bit_set::BitSet;
 
-use self::BitsParams::*;
+use self::BitsParam::*;
 
 /// Parameters for configuring the generation of `StrategyFor<Bits<A>>`.
 #[derive(Clone, PartialEq, Eq, Hash, Debug)]
-pub enum BitsParams<A> {
+pub enum BitsParam<A> {
     /// Uses `BitSetStrategy::new(range.start, range.end)`.
     Ranged(Range<usize>),
     /// Uses `BitSetStrategy::masked(mask)`.
@@ -38,26 +38,26 @@ macro_rules! allones_impls {
 
 allones_impls!(u8, u16, u32, u64, usize, i8, i16, i32, i64, isize);
 
-impl<A: AllOnes + BitSetLike> Default for BitsParams<A> {
+impl<A: AllOnes + BitSetLike> Default for BitsParam<A> {
     fn default() -> Self {
         (A::all_ones(),).into()
     }
 }
 
-impl Default for BitsParams<BitSet> {
+impl Default for BitsParam<BitSet> {
     /// Uses a range: `0 .. sizeof(usize)^2`.
     fn default() -> Self {
         Ranged(0..(mem::size_of::<usize>() * 8).pow(2))
     }
 }
 
-impl<A: BitSetLike> From<(A,)> for BitsParams<A> {
+impl<A: BitSetLike> From<(A,)> for BitsParam<A> {
     fn from(x: (A,)) -> Self {
         Masked(x.0)
     }
 }
 
-impl<A> From<Range<usize>> for BitsParams<A> {
+impl<A> From<Range<usize>> for BitsParam<A> {
     fn from(x: Range<usize>) -> Self {
         Ranged(x)
     }
@@ -87,7 +87,7 @@ macro_rules! impl_bits {
             }
 
             arbitrary!(Bits<$typ>, FromMapStrategy<BitSetStrategy<$typ>, Self>,
-                BitsParams<$typ>;
+                BitsParam<$typ>;
                 args => from_map_strategy(match args {
                     Ranged(r) => BitSetStrategy::new(r.start, r.end),
                     Masked(m) => BitSetStrategy::masked(m),

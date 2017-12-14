@@ -12,17 +12,17 @@ use std::sync::Arc;
 /// Wraps the regex that forms the `Strategy` for `String` so that a sensible
 /// `Default` can be given. The default is a string of non-control characters.
 #[derive(Copy, Clone, From, Into, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct StringParameter<'a>(&'a str);
+pub struct StringParam<'a>(&'a str);
 
-impl<'a> Default for StringParameter<'a> {
+impl<'a> Default for StringParam<'a> {
     fn default() -> Self {
-        StringParameter("\\PC*")
+        StringParam("\\PC*")
     }
 }
 
 impl<'a> Arbitrary<'a> for String {
     valuetree!();
-    type Parameters = StringParameter<'a>;
+    type Parameters = StringParam<'a>;
     type Strategy = &'a str;
 
     /// ## Safety
@@ -36,7 +36,7 @@ impl<'a> Arbitrary<'a> for String {
 
 macro_rules! dst_wrapped {
     ($($w: ident),*) => {
-        $(arbitrary!($w<str>, FMapped<'a, String, Self>, StringParameter<'a>;
+        $(arbitrary!($w<str>, FMapped<'a, String, Self>, StringParam<'a>;
             a => any_with_sinto::<String, _>(a)
         );)*
     };

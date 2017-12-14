@@ -13,17 +13,41 @@ use std::mem;
 /// element.
 #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Debug,
          From)]
-pub struct ArrayParamMod<A: Clone>(fn(usize, A) -> A);
+pub struct ParamModifier<A: Clone>(fn(usize, A) -> A);
 
-impl<A: Clone> Default for ArrayParamMod<A> {
+impl<A: Clone> Default for ParamModifier<A> {
     fn default() -> Self {
         fn identity<A>(_: usize, x: A) -> A { x }
-        ArrayParamMod(identity)
+        ParamModifier(identity)
     }
 }
 
-type ArrayParams<A> = product_type![A, ArrayParamMod<A>];
+impl<A: Clone> ParamModifier<A> {
+    /// Creates a `ParamModifier` from a function `fn(usize, A) -> A`.
+    pub fn new(fun: fn(usize, A) -> A) -> Self {
+        ParamModifier(fun)
+    }
 
+    // Don't rely on these existing internally:
+
+    /// Merges self together with some other argument producing a product
+    /// type expected by some impelementations of `A: Arbitrary<'a>` in
+    /// `A::Parameters`. This can be more ergonomic to work with and may
+    /// help type inference.
+    pub fn with<X>(self, and: X) -> product_type![Self, X] {
+        product_pack![self, and]
+    }
+
+    /// Merges self together with some other argument generated with a
+    /// default value producing a product type expected by some
+    /// impelementations of `A: Arbitrary<'a>` in `A::Parameters`.
+    /// This can be more ergonomic to work with and may help type inference.
+    pub fn lift<X: Default>(self) -> product_type![Self, X] {
+        self.with(default())
+    }
+}
+
+type ArrayParams<A> = product_type![ParamModifier<A>, A];
 
 macro_rules! impl_array {
     ($($n: expr),*) => {
@@ -36,7 +60,7 @@ macro_rules! impl_array {
                 type Parameters = ArrayParams<A::Parameters>;
                 type Strategy = [A::Strategy; $n];
                 fn arbitrary_with(args: Self::Parameters) -> Self::Strategy {
-                    let product_unpack![mut curr, apm] = args;
+                    let product_unpack![apm, mut curr] = args;
                     let mut i = 0;
                     <[A::Strategy; $n]>::init_with(|| {
                         let next = (apm.0)(i, curr.clone());
