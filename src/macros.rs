@@ -83,8 +83,8 @@ macro_rules! wrap_from {
 macro_rules! generator {
     ($($self: ty, $fun: expr);+) => {
         $(
-            arbitrary!($self, $crate::GenStrategy<Self>;
-                $crate::GenStrategy::new($fun));
+            arbitrary!($self, $crate::FnGenerator<Self>;
+                $crate::FnGenerator::new($fun));
         )+
     };
 }

@@ -85,6 +85,7 @@ arbitrary!(VarError,
 
 // FIXME: SplitPaths when lifetimes in strategies are possible.
 
+/*
 #[cfg(test)]
 mod tests {
     use any;//::*;
@@ -119,3 +120,4 @@ mod tests {
     */
     }
 }
+*/

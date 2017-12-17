@@ -26,8 +26,8 @@ arbitrary!(Barrier, SMapped<'a, u16, Self>;  // usize would be extreme!
 );
 
 arbitrary!(BarrierWaitResult,
-    TupleUnion<(W<GenStrategy<Self>>, W<GenStrategy<Self>>)>;
-    prop_oneof![GenStrategy::new(bwr_true), GenStrategy::new(bwr_false)]
+    TupleUnion<(W<FnGenerator<Self>>, W<FnGenerator<Self>>)>;
+    prop_oneof![FnGenerator::new(bwr_true), FnGenerator::new(bwr_false)]
 );
 
 generator!(
@@ -131,12 +131,12 @@ generator!(Select, Select::new);
 
 // If only half of a pair is generated then you will get a hang-up.
 // Thus the only meaningful impls are in pairs.
-arbitrary!([A] (Sender<A>, Receiver<A>), GenStrategy<Self>;
-    GenStrategy::new(channel)
+arbitrary!([A] (Sender<A>, Receiver<A>), FnGenerator<Self>;
+    FnGenerator::new(channel)
 );
 
-arbitrary!([A: Debug] (Sender<A>, IntoIter<A>), GenStrategy<Self>;
-    GenStrategy::new(|| {
+arbitrary!([A: Debug] (Sender<A>, IntoIter<A>), FnGenerator<Self>;
+    FnGenerator::new(|| {
         let (rx, tx) = channel();
         (rx, tx.into_iter())
     })
