@@ -20,7 +20,7 @@ impl_wrap_char!(ToLowercase,   char::to_lowercase);
 #[cfg(MIN_VER_1_24_0)]
 impl_wrap_char!(ToUppercase,   char::to_uppercase);
 
-#[cfg(feature = "nightly")]
+#[cfg(feature = "unstable")]
 // TODO: Make generic over all Iterator<Item = u8>?
 arbitrary!(DecodeUtf8<<Vec<u8> as IntoIterator>::IntoIter>,
     Flatten<Mapped<'a, u16, SMapped<'a, Vec<u8>, Self>>>;
@@ -45,7 +45,7 @@ arbitrary!(ParseCharError, IndFlatten<Mapped<'a, bool, Just<Self>>>;
         Just((if is_two { "__" } else { "" }).parse::<char>().unwrap_err()))
 );
 
-#[cfg(feature = "nightly")]
+#[cfg(feature = "unstable")]
 arbitrary!(CharTryFromError; {
     use std::convert::TryFrom;
     char::try_from(0xD800 as u32).unwrap_err()
@@ -73,7 +73,7 @@ mod test {
         decode_utf16 => DecodeUtf16<<Vec<u16> as IntoIterator>::IntoIter>
     );
 
-    #[cfg(feature = "nightly")]
+    #[cfg(feature = "unstable")]
     no_panic_test!(
         decode_utf8 => DecodeUtf8<<Vec<u8> as IntoIterator>::IntoIter>,
         char_try_from_error => CharTryFromError

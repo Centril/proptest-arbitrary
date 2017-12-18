@@ -19,7 +19,7 @@ arbitrary!([A: Arbitrary<'a>] opt::IntoIter<A>,
     <opt::Option<A> as Arbitrary<'a>>::Parameters;
     args => any_with_smap(args, Option::into_iter));
 
-#[cfg(feature = "nightly")]
+#[cfg(feature = "unstable")]
 arbitrary!(opt::NoneError; opt::NoneError);
 
 #[cfg(test)]
@@ -29,7 +29,7 @@ mod test {
         option_iter => opt::IntoIter<u8>
     );
 
-    #[cfg(feature = "nightly")]
+    #[cfg(feature = "unstable")]
     no_panic_test!(
         none_error => opt::NoneError
     );

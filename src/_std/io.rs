@@ -59,7 +59,7 @@ arbitrary!(
     args => any_with_smap(product_pack![args, default()], |(a, b)| a.take(b))
 );
 
-#[cfg(feature = "nightly")]
+#[cfg(feature = "unstable")]
 wrap_ctor!([Read] Chars, Read::chars);
 
 arbitrary!(ErrorKind, Union<Just<Self>>;
@@ -106,7 +106,7 @@ arbitrary!(Error, SMapped<'a, (ErrorKind, Option<String>), Self>;
     )
 );
 
-#[cfg(feature = "nightly")]
+#[cfg(feature = "unstable")]
 arbitrary!(CharsError, SMapped<'a, Option<Error>, Self>;
     any_with_smap(default(), |oe| {
         use std::io::CharsError::*;
@@ -136,7 +136,7 @@ mod test {
         error       => Error
     );
 
-    #[cfg(feature = "nightly")]
+    #[cfg(feature = "unstable")]
     no_panic_test!(
         chars       => Chars<Repeat>,
         chars_error => CharsError

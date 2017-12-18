@@ -84,7 +84,7 @@
 // Nightly opt-in features:
 //==============================================================================
 
-#![cfg_attr(feature = "nightly", feature(
+#![cfg_attr(feature = "unstable", feature(
       try_from
     , decode_utf8
     , io

@@ -46,7 +46,7 @@ arbitrary!([A: 'static + Send + Arbitrary<'a>] JoinHandle<A>,
 );
 */
 
-#[cfg(feature = "nightly")]
+#[cfg(feature = "unstable")]
 arbitrary!(LocalKeyState,
     TupleUnion<(W<Just<Self>>, W<Just<Self>>, W<Just<Self>>)>;
     prop_oneof![
@@ -62,7 +62,7 @@ mod test {
         builder => Builder
     );
 
-    #[cfg(feature = "nightly")]
+    #[cfg(feature = "unstable")]
     no_panic_test!(
         local_key_state => LocalKeyState
     );

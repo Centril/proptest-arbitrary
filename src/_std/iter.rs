@@ -46,7 +46,7 @@ macro_rules! usize_mod {
 usize_mod!(Skip, skip);
 usize_mod!(Take, take);
 
-#[cfg(feature = "nightly")]
+#[cfg(feature = "unstable")]
 usize_mod!(StepBy, step_by);
 
 #[cfg(test)]
@@ -87,7 +87,7 @@ mod test {
         take      => Take<Repeat<u8>>
     );
 
-    #[cfg(feature = "nightly")]
+    #[cfg(feature = "unstable")]
     no_panic_test!(
         step_by   => StepBy<Repeat<u8>>
     );

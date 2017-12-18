@@ -38,5 +38,5 @@ mod sync;
 mod thread;
 mod time;
 
-#[cfg(feature = "nightly")]
+#[cfg(feature = "unstable")]
 mod heap;

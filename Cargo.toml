@@ -30,7 +30,7 @@ maintenance = { status = "experimental" }
 default = ["frunk"]
 
 # Enables nightly features of Rust.
-nightly = []
+unstable = []
 
 # Uses frunk_core and frunk_derives for Hlist and generic.
 frunk = ["frunk_core", "frunk_derives"]

@@ -83,7 +83,7 @@ macro_rules! atomic {
 // impl_wrap_gen!(AtomicPtr); // We don't have impl Arbitrary for *mut T yet.
 atomic!(AtomicBool, bool; AtomicIsize, isize; AtomicUsize, usize);
 
-#[cfg(feature = "nightly")]
+#[cfg(feature = "unstable")]
 atomic!(AtomicI8, i8; AtomicI16, i16; AtomicI32, i32; AtomicI64, i64;
         AtomicU8, u8; AtomicU16, u16; AtomicU32, u32; AtomicU64, u64);
 
@@ -128,7 +128,7 @@ arbitrary!(
     ]
 );
 
-#[cfg(feature = "nightly")]
+#[cfg(feature = "unstable")]
 generator!(Select, Select::new);
 
 // If only half of a pair is generated then you will get a hang-up.
@@ -181,7 +181,7 @@ mod test {
         syncrx_txiter => (SyncSender<u8>, IntoIter<u8>)
     );
 
-    #[cfg(feature = "nightly")]
+    #[cfg(feature = "unstable")]
     no_panic_test!(
         select => Select,
         atomic_i8  => AtomicI8,

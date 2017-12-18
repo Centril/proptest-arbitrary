@@ -6,7 +6,7 @@ use std::num::*;
 arbitrary!(ParseFloatError; "".parse::<f32>().unwrap_err());
 arbitrary!(ParseIntError; "".parse::<u32>().unwrap_err());
 
-#[cfg(feature = "nightly")]
+#[cfg(feature = "unstable")]
 arbitrary!(TryFromIntError; {
     use std::convert::TryFrom;
     u8::try_from(-1).unwrap_err()
@@ -38,7 +38,7 @@ mod test {
         fp_category => FpCategory
     );
 
-    #[cfg(feature = "nightly")]
+    #[cfg(feature = "unstable")]
     no_panic_test!(
         try_from_int_error => TryFromIntError
     );

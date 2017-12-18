@@ -57,7 +57,7 @@ arbitrary!(SocketAddr,
     prop_oneof![any_sinto::<SocketAddrV4, _>(), any_sinto::<SocketAddrV6, _>()]
 );
 
-#[cfg(feature = "nightly")]
+#[cfg(feature = "unstable")]
 arbitrary!(Ipv6MulticastScope,
     TupleUnion<( W<Just<Self>>, W<Just<Self>>, W<Just<Self>>
                , W<Just<Self>>, W<Just<Self>>, W<Just<Self>>, W<Just<Self>>)>;
@@ -88,7 +88,7 @@ mod test {
         socket_addr => SocketAddr
     );
 
-    #[cfg(feature = "nightly")]
+    #[cfg(feature = "unstable")]
     no_panic_test!(
         ipv6_multicast_scope => Ipv6MulticastScope
     );
