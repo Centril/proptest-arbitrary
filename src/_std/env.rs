@@ -73,7 +73,7 @@ fn osstring_invalid_string() -> BoxedStrategy<OsString> {
 #[cfg(not(target_os = "windows"))]
 fn osstring_invalid_string() -> BoxedStrategy<OsString> {
     use std::os::unix::ffi::OsStringExt;
-    not_utf8_bytes().prop_map(OsString::from_vec).boxed()
+    static_map(not_utf8_bytes(true), OsString::from_vec).boxed()
 }
 
 arbitrary!(VarError,

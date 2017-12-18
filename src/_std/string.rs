@@ -174,7 +174,6 @@ fn gen_el_bytes(allow_null: bool) -> BoxedStrategy<ELBytes> {
         _               => panic!()
     }));
     prop_oneof![
-        /*
         // error_len = None
         prop_oneof![
             // w = 2
@@ -212,7 +211,6 @@ fn gen_el_bytes(allow_null: bool) -> BoxedStrategy<ELBytes> {
             // w = 4
             (byte01_w4.clone(), fail_byte.clone())
         ], b3),
-        */
         // error_len = Some(3), w = 4
         static_map((byte01_w4, succ_byte, fail_byte), b4),
     ].boxed()
