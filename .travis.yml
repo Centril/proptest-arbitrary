@@ -5,12 +5,24 @@ rust:
 - 1.22.1
 - stable
 - beta
+- nightly
 
 matrix:
   allow_failures:
     - rust: nightly
-  include:
-    - rust: nightly
-      env: CARGO_SET_FEATURE_UNSTABLE
+
+# load travis-cargo
+before_script:
+  - |
+      pip install 'travis-cargo<0.2' --user &&
+      export PATH=$HOME/.local/bin:$PATH
+
+# the main build
+script:
+  - |
+      travis-cargo build &&
+      travis-cargo test &&
+      travis-cargo bench &&
+      travis-cargo --only stable doc
 
 cache: cargo
