@@ -10,5 +10,8 @@ rust:
 matrix:
   allow_failures:
     - rust: nightly
+  include:
+    - rust: nightly
+      env: CARGO_SET_FEATURE_UNSTABLE
 
 cache: cargo
