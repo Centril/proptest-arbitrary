@@ -129,42 +129,38 @@ fn gen_el_bytes(allow_null: bool) -> BoxedStrategy<ELBytes> {
     3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3, // 0xEF
     4,4,4,4,4,0,0,0,0,0,0,0,0,0,0,0, // 0xFF
     ];
-    */
-    /*
+
     /// Mask of the value bits of a continuation byte.
     const CONT_MASK: u8 = 0b0011_1111;
     /// Value of the tag bits (tag mask is !CONT_MASK) of a continuation byte.
     const TAG_CONT_U8: u8 = 0b1000_0000;
     */
 
-    // NOTE: We get rid of the null byte cause it gives us problems in
-    // Arbitrary<'a> for IntoStringError.
-
-    let succ_byte = 0x80u8..0xC0u8;
-    let fail_first = if allow_null { 0x00u8 } else { 0x01u8 };
-    let fail_byte = prop_oneof![fail_first..0x7Fu8, 0xC1u8..];
-    let byte0_w0  = prop_oneof![0x80u8..0xC0u8, 0xF5u8..];
-    let byte0_w2  = 0xC2u8..0xE0u8;
-    let byte0_w3  = 0xE0u8..0xF0u8;
-    let byte0_w4  = 0xF0u8..0xF5u8;
-    let byte01_w3 = byte0_w3.clone().prop_flat_map(|x| (Just(x), match x {
+    let succ_byte  = 0x80u8..0xC0u8;
+    let start_byte = if allow_null { 0x00u8 } else { 0x01u8 };
+    let fail_byte  = prop_oneof![start_byte..0x7Fu8, 0xC1u8..];
+    let byte0_w0   = prop_oneof![0x80u8..0xC0u8, 0xF5u8..];
+    let byte0_w2   = 0xC2u8..0xE0u8;
+    let byte0_w3   = 0xE0u8..0xF0u8;
+    let byte0_w4   = 0xF0u8..0xF5u8;
+    let byte01_w3  = byte0_w3.clone().prop_flat_map(|x| (Just(x), match x {
         0xE0u8          => 0xA0u8..0xC0u8,
         0xE1u8...0xECu8 => 0x80u8..0xC0u8,
         0xEDu8          => 0x80u8..0xA0u8,
         0xEEu8...0xEFu8 => 0x80u8..0xA0u8,
         _               => panic!(),
     }));
-    let byte01_w3_e1 = byte0_w3.clone().prop_flat_map(|x| (Just(x), match x {
-        0xE0u8          => prop_oneof![..0xA0u8, 0xC0u8..],
-        0xE1u8...0xECu8 => prop_oneof![..0x80u8, 0xC0u8..],
-        0xEDu8          => prop_oneof![..0x80u8, 0xA0u8..],
-        0xEEu8...0xEFu8 => prop_oneof![..0x80u8, 0xA0u8..],
+    let byte01_w3_e1 = byte0_w3.clone().prop_flat_map(move |x| (Just(x), match x {
+        0xE0u8          => prop_oneof![start_byte..0xA0u8, 0xC0u8..],
+        0xE1u8...0xECu8 => prop_oneof![start_byte..0x80u8, 0xC0u8..],
+        0xEDu8          => prop_oneof![start_byte..0x80u8, 0xA0u8..],
+        0xEEu8...0xEFu8 => prop_oneof![start_byte..0x80u8, 0xA0u8..],
         _               => panic!(),
     }));
-    let byte01_w4_e1 = byte0_w4.clone().prop_flat_map(|x| (Just(x), match x {
-        0xF0u8          => prop_oneof![..0x90u8, 0xA0u8..],
-        0xF1u8...0xF3u8 => prop_oneof![..0x80u8, 0xA0u8..],
-        0xF4u8          => prop_oneof![..0x80u8, 0x90u8..],
+    let byte01_w4_e1 = byte0_w4.clone().prop_flat_map(move |x| (Just(x), match x {
+        0xF0u8          => prop_oneof![start_byte..0x90u8, 0xA0u8..],
+        0xF1u8...0xF3u8 => prop_oneof![start_byte..0x80u8, 0xA0u8..],
+        0xF4u8          => prop_oneof![start_byte..0x80u8, 0x90u8..],
         _               => panic!()
     }));
     let byte01_w4 = byte0_w4.clone().prop_flat_map(|x| (Just(x), match x {

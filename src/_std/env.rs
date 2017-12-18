@@ -4,7 +4,6 @@ use super::*;
 use std::env::*;
 use std::iter::once;
 use std::ffi::OsString;
-use proptest::collection::vec;
 
 // FIXME: SplitPaths when lifetimes in strategies are possible.
 
@@ -60,6 +59,8 @@ fn make_utf16_invalid(buf: &mut Vec<u16>, p: usize) {
 #[cfg(target_os = "windows")]
 fn osstring_invalid_string() -> BoxedStrategy<OsString> {
     use std::os::windows::ffi::OsStringExt;
+    use proptest::collection::vec;
+
     any::<u16>().prop_flat_map(|vlen| {
         let len = vlen as usize;
         let sbuf = vec(..std::u16::MAX, len..len + 1);
