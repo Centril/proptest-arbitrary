@@ -413,6 +413,7 @@ where
 /// [`Arbitrary`]: trait.Arbitrary.html
 /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
 pub fn any<'a, A: Arbitrary<'a>>() -> StrategyType<'a, A> {
+    // ^-- We use a shorter name so that turbofish becomes more ergonomic.
     A::arbitrary()
 }
 
@@ -448,6 +449,7 @@ pub fn any<'a, A: Arbitrary<'a>>() -> StrategyType<'a, A> {
 /// [`Strategy`]: ../proptest/strategy/trait.Strategy.html
 pub fn any_with<'a, A: Arbitrary<'a>>(args: A::Parameters)
     -> StrategyType<'a, A> {
+    // ^-- We use a shorter name so that turbofish becomes more ergonomic.
     A::arbitrary_with(args)
 }
 
