@@ -316,7 +316,7 @@ pub type ParamsType<'a, A> = <A as Arbitrary<'a>>::Parameters;
 /// extern crate proptest_arbitrary;
 /// use proptest_arbitrary::{arbitrary, StrategyFor};
 ///
-/// fn gen_bool(x: bool) -> StrategyFor<bool> {
+/// fn gen_vec_usize() -> StrategyFor<Vec<usize>> {
 ///     arbitrary()
 /// }
 ///
@@ -358,10 +358,10 @@ where
 ///
 /// ```rust
 /// extern crate proptest_arbitrary;
-/// use proptest_arbitrary::{arbitrary_with, StrategyFor};
+/// use proptest_arbitrary::{arbitrary_with, StrategyFor, size_bounds};
 ///
-/// fn gen_bool(x: bool) -> StrategyFor<bool> {
-///     arbitrary_with(())
+/// fn gen_vec_5_u32() -> StrategyFor<Vec<u32>> {
+///     arbitrary_with(size_bounds(10).lift())
 /// }
 ///
 /// # fn main() {}
@@ -398,14 +398,20 @@ where
 /// The function can be used as:
 ///
 /// ```rust
+/// #[macro_use] extern crate proptest;
 /// extern crate proptest_arbitrary;
 /// use proptest_arbitrary::{any, StrategyFor};
 ///
-/// fn gen_bool(x: bool) -> StrategyFor<bool> {
-///     any::<bool>()
+/// proptest! {
+///     fn reverse_reverse_is_identity(ref vec in any::<Vec<u32>>()) {
+///         let vec2 = vec.iter().cloned().rev().rev().collect::<Vec<u32>>();
+///         prop_assert_eq!(vec, &vec2);
+///     }
 /// }
 ///
-/// # fn main() {}
+/// fn main() {
+///     reverse_reverse_is_identity();
+/// }
 /// ```
 ///
 /// [`any_with::<A>(args)`]: fn.any_with.html
@@ -434,15 +440,24 @@ pub fn any<'a, A: Arbitrary<'a>>() -> StrategyType<'a, A> {
 /// The function can be used as:
 ///
 /// ```rust
+/// #[macro_use] extern crate proptest;
 /// extern crate proptest_arbitrary;
-/// use proptest_arbitrary::{any_with, StrategyFor};
+/// use proptest_arbitrary::{any_with, StrategyFor, size_bounds};
 ///
-/// fn gen_bool(x: bool) -> StrategyFor<bool> {
-///     any_with::<bool>(())
+/// proptest! {
+///     fn reverse_reverse_is_identity
+///         (ref vec in any_with::<Vec<u32>>(size_bounds(1000).lift()))
+///     {
+///         let vec2 = vec.iter().cloned().rev().rev().collect::<Vec<u32>>();
+///         prop_assert_eq!(vec, &vec2);
+///     }
 /// }
 ///
-/// # fn main() {}
+/// fn main() {
+///     reverse_reverse_is_identity();
+/// }
 /// ```
+///
 /// [`any::<A>()`]: fn.any.html
 /// [`arbitrary_with`]: fn.arbitrary_with.html
 /// [`Arbitrary`]: trait.Arbitrary.html
