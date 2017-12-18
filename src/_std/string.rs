@@ -51,18 +51,27 @@ generator!(FromUtf16Error, || String::from_utf16(&[0xD800]).unwrap_err());
 // generator!(ParseError, || panic!());
 
 arbitrary!(FromUtf8Error, SFnPtrMap<BoxedStrategy<Vec<u8>>, Self>;
-    static_map(not_utf8_bytes(), |bytes| String::from_utf8(bytes).unwrap_err())
+    static_map(not_utf8_bytes(true), |bs| String::from_utf8(bs).unwrap_err())
 );
 
-pub(crate) fn not_utf8_bytes() -> BoxedStrategy<Vec<u8>> {
-    (any::<u16>(), gen_el_bytes()).prop_flat_map(|(valid_up_to, el_bytes)| {
-        let bounds: SizeBounds = (valid_up_to as usize).into();
-        any_with_map(product_pack![bounds, default()], move |p: Vec<char>| {
-            let mut bytes = p.iter().collect::<String>().into_bytes();
-            bytes.extend(el_bytes.into_iter());
-            bytes
-        })
-    }).boxed()
+// This could be faster.. The main cause seems to be generation of
+// Vec<char>. any::<u8>() instead of any::<u16>() speeds it up considerably.
+pub(crate) fn not_utf8_bytes(allow_null: bool) -> BoxedStrategy<Vec<u8>> {
+    (any::<u8>(), gen_el_bytes(allow_null))
+        .prop_flat_map(move |(valid_up_to, el_bytes)| {
+            let bounds: SizeBounds = (valid_up_to as usize).into();
+            any_with_map(product_pack![bounds, default()], move |p: Vec<char>| {
+                let iter = p.iter();
+                let string = if allow_null {
+                    iter.collect::<String>()
+                } else {
+                    iter.filter(|&&x| x != '\u{0}').collect::<String>()
+                };
+                let mut bytes = string.into_bytes();
+                bytes.extend(el_bytes.into_iter());
+                bytes
+            })
+        }).boxed()
 }
 
 #[derive(Debug)]
@@ -99,7 +108,7 @@ fn b4(a: ((u8, u8), u8, u8)) -> ELBytes {
 // we know that .error_len() \in {None, Some(1), Some(2), Some(3)}.
 // We represent this with the range [0..4) and generate a valid
 // sequence from that.
-fn gen_el_bytes() -> BoxedStrategy<ELBytes> {
+fn gen_el_bytes(allow_null: bool) -> BoxedStrategy<ELBytes> {
     /*
     // https://tools.ietf.org/html/rfc3629
     static UTF8_CHAR_WIDTH: [u8; 256] = [
@@ -128,8 +137,12 @@ fn gen_el_bytes() -> BoxedStrategy<ELBytes> {
     const TAG_CONT_U8: u8 = 0b1000_0000;
     */
 
+    // NOTE: We get rid of the null byte cause it gives us problems in
+    // Arbitrary<'a> for IntoStringError.
+
     let succ_byte = 0x80u8..0xC0u8;
-    let fail_byte = prop_oneof![0x00u8..0x7Fu8, 0xC1u8..];
+    let fail_first = if allow_null { 0x00u8 } else { 0x01u8 };
+    let fail_byte = prop_oneof![fail_first..0x7Fu8, 0xC1u8..];
     let byte0_w0  = prop_oneof![0x80u8..0xC0u8, 0xF5u8..];
     let byte0_w2  = 0xC2u8..0xE0u8;
     let byte0_w3  = 0xE0u8..0xF0u8;
@@ -161,6 +174,7 @@ fn gen_el_bytes() -> BoxedStrategy<ELBytes> {
         _               => panic!()
     }));
     prop_oneof![
+        /*
         // error_len = None
         prop_oneof![
             // w = 2
@@ -198,6 +212,7 @@ fn gen_el_bytes() -> BoxedStrategy<ELBytes> {
             // w = 4
             (byte01_w4.clone(), fail_byte.clone())
         ], b3),
+        */
         // error_len = Some(3), w = 4
         static_map((byte01_w4, succ_byte, fail_byte), b4),
     ].boxed()

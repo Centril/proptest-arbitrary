@@ -60,7 +60,7 @@ arbitrary!(FromBytesWithNulError, SMapped<'a, Option<u16>, Self>; {
 });
 
 arbitrary!(IntoStringError, SFnPtrMap<BoxedStrategy<Vec<u8>>, Self>;
-    static_map(not_utf8_bytes(), |bytes|
+    static_map(not_utf8_bytes(false), |bytes|
         CString::new(bytes).unwrap().into_string().unwrap_err()
     )
 );
@@ -72,9 +72,8 @@ mod test {
         os_string => OsString,
         box_c_str => Box<CStr>,
         box_os_str => Box<OsStr>,
+        into_string_error => IntoStringError,
         from_bytes_with_nul => FromBytesWithNulError
-        //TODO
-        //into_string_error => IntoStringError
     );
     #[cfg(MIN_VER_1_24_0)]
     no_panic_test!(

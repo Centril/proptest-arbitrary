@@ -93,6 +93,10 @@ macro_rules! generator {
 // Macros for testing:
 //==============================================================================
 
+/// We are mostly interested in ensuring that generating input from our
+/// strategies is able to construct a value, therefore ensuring that
+/// no panic occurs is mostly sufficient. Shrinking for strategies that
+/// use special shrinking methods can be handled separately.
 #[cfg(test)]
 macro_rules! no_panic_test {
     ($($module: ident => $self: ty),+) => {
