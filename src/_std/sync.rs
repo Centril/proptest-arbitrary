@@ -1,3 +1,5 @@
+//! Arbitrary implementations for `std::sync`.
+
 use super::*;
 use std::sync::*;
 use std::sync::atomic::*;
@@ -142,13 +144,53 @@ arbitrary!([A: Debug] (Sender<A>, IntoIter<A>), FnGenerator<Self>;
     })
 );
 
-arbitrary!([A] (SyncSender<A>, Receiver<A>), SMapped<'a, u32, Self>;
-    static_map(any::<u32>(), |size| sync_channel(size as usize))
+arbitrary!([A] (SyncSender<A>, Receiver<A>), SMapped<'a, u16, Self>;
+    static_map(any::<u16>(), |size| sync_channel(size as usize))
 );
 
-arbitrary!([A: Debug] (SyncSender<A>, IntoIter<A>), SMapped<'a, u32, Self>;
-    static_map(any::<u32>(), |size| {
+arbitrary!([A: Debug] (SyncSender<A>, IntoIter<A>), SMapped<'a, u16, Self>;
+    static_map(any::<u16>(), |size| {
         let (rx, tx) = sync_channel(size as usize);
         (rx, tx.into_iter())
     })
 );
+
+#[cfg(test)]
+mod test {
+    no_panic_test!(
+        arc => Arc<u8>,
+        mutex => Mutex<u8>,
+        rw_lock => RwLock<u8>,
+        barrier => Barrier,
+        barrier_wait_result => BarrierWaitResult,
+        condvar => Condvar,
+        once => Once,
+        wait_timeout_result => WaitTimeoutResult,
+        atomic_bool => AtomicBool,
+        atomic_isize => AtomicIsize,
+        atomic_usize => AtomicUsize,
+        ordering => Ordering,
+        recv_error => RecvError,
+        send_error => SendError<u8>,
+        recv_timeout_error => RecvTimeoutError,
+        try_recv_error => TryRecvError,
+        try_send_error => TrySendError<u8>,
+        rx_tx => (Sender<u8>, Receiver<u8>),
+        rx_txiter => (Sender<u8>, IntoIter<u8>),
+        syncrx_tx => (SyncSender<u8>, Receiver<u8>),
+        syncrx_txiter => (SyncSender<u8>, IntoIter<u8>)
+    );
+
+    #[cfg(feature = "nightly")]
+    no_panic_test!(
+        select => Select,
+        atomic_i8  => AtomicI8,
+        atomic_i16 => AtomicI16,
+        atomic_i32 => AtomicI32,
+        atomic_i64 => AtomicI64,
+        atomic_u8  => AtomicU8,
+        atomic_u16 => AtomicU16,
+        atomic_u32 => AtomicU32,
+        atomic_u64 => AtomicU64
+    );
+}

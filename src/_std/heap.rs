@@ -1,14 +1,16 @@
+//! Arbitrary implementations for `std::hash`.
+
 use super::*;
 use std::heap::*;
 use std::usize;
 
-impl_just!(CannotReallocInPlace, CannotReallocInPlace);
-impl_just!(Heap, Heap);
+arbitrary!(CannotReallocInPlace; CannotReallocInPlace);
+arbitrary!(Heap; Heap);
 
 // Not Debug :/
-//gen_strat!(System, || System);
+//generator!(System, || System);
 
-impl_arbitrary!(Layout, BoxedStrategy<Layout>,
+arbitrary!(Layout, BoxedStrategy<Layout>;
     (0u8..32u8).prop_flat_map(|align_power| {
         // align must be a power of two and <= (1 << 31):
         let align = 1 << align_power;
@@ -22,8 +24,8 @@ impl_arbitrary!(Layout, BoxedStrategy<Layout>,
             Layout::from_size_align(size, align).unwrap())
     }).boxed()
 );
-impl_arbitrary!(AllocErr,
-    TupleUnion<(W<SMapped<'a, Layout, Self>>, W<Just<Self>>)>,
+
+arbitrary!(AllocErr, TupleUnion<(W<SMapped<'a, Layout, Self>>, W<Just<Self>>)>;
     prop_oneof![
         static_map(any::<Layout>(), |request| AllocErr::Exhausted { request }),
         Just(AllocErr::Unsupported {
@@ -34,3 +36,11 @@ impl_arbitrary!(AllocErr,
         })
     ]
 );
+
+#[cfg(test)]
+mod test {
+    no_panic_test!(
+        layout => Layout,
+        alloc_err => AllocErr
+    );
+}

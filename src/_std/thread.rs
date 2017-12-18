@@ -1,6 +1,7 @@
+//! Arbitrary implementations for `std::thread`.
+
 use super::*;
 use std::thread::*;
-use std::time::Duration;
 
 arbitrary!(Builder, SMapped<'a, (Option<usize>, Option<String>), Self>; {
     let prob = prob(0.7);
@@ -18,7 +19,7 @@ arbitrary!(Builder, SMapped<'a, (Option<usize>, Option<String>), Self>; {
 /*
  * The usefulness of this impl is debatable - as are its semantics.
  * Perhaps a CoArbitrary-based solution is preferable.
- */
+
 arbitrary!([A: 'static + Send + Arbitrary<'a>] JoinHandle<A>,
     SMapped<'a, (A, Option<()>, u8), Self>, A::Parameters;
     args => {
@@ -30,16 +31,20 @@ arbitrary!([A: 'static + Send + Arbitrary<'a>] JoinHandle<A>,
         ];
         any_with_smap(args2, |(val, panic, sleep)| thread::spawn(move || {
             // Sleep a random amount:
+            use std::time::Duration;
             thread::sleep(Duration::from_millis(sleep as u64));
+
             // Randomly panic:
             if panic.is_some() {
                 panic!("Arbitrary for JoinHandle randomly paniced!");
             }
+
             // Move value into thread and then just return it:
             val
         }))
     }
 );
+*/
 
 #[cfg(feature = "nightly")]
 arbitrary!(LocalKeyState,
@@ -50,3 +55,29 @@ arbitrary!(LocalKeyState,
         Just(LocalKeyState::Destroyed)
     ]
 );
+
+#[cfg(test)]
+mod test {
+    no_panic_test!(
+        builder => Builder
+    );
+
+    #[cfg(feature = "nightly")]
+    no_panic_test!(
+        local_key_state => LocalKeyState
+    );
+
+    /*
+    use super::*;
+    proptest! {
+        #[test]
+        fn join_handle_works(ref jh in any::<JoinHandle<u8>>()) {
+            use std::panic::catch_unwind;
+            catch_unwind(|| {
+                jh.join();
+                ()
+            })
+        }
+    }
+    */
+}

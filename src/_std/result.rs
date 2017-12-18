@@ -1,7 +1,5 @@
-//==============================================================================
-// Result:
-//==============================================================================
-
+//! Arbitrary implementations for `std::result`.
+//! 
 use super::*;
 use std::result::IntoIter;
 use proptest::result;
@@ -24,3 +22,11 @@ arbitrary!([A: Arbitrary<'a>] IntoIter<A>,
     <Result<A, ()> as Arbitrary<'a>>::Parameters;
     args => any_with_smap(args, Result::into_iter)
 );
+
+#[cfg(test)]
+mod test {
+    no_panic_test!(
+        result    => Result<u8, u16>,
+        into_iter => IntoIter<u8>
+    );
+}

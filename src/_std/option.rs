@@ -1,6 +1,4 @@
-//==============================================================================
-// Option:
-//==============================================================================
+//! Arbitrary implementations for `std::option`.
 
 use super::*;
 use std::option as opt;
@@ -23,3 +21,16 @@ arbitrary!([A: Arbitrary<'a>] opt::IntoIter<A>,
 
 #[cfg(feature = "nightly")]
 arbitrary!(opt::NoneError; opt::NoneError);
+
+#[cfg(test)]
+mod test {
+    no_panic_test!(
+        option      => Option<u8>,
+        option_iter => opt::IntoIter<u8>
+    );
+
+    #[cfg(feature = "nightly")]
+    no_panic_test!(
+        none_error => opt::NoneError
+    );
+}

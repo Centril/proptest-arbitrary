@@ -1,3 +1,5 @@
+//! Arbitrary implementations for `std::time`.
+
 use super::*;
 use std::time::*;
 
@@ -18,3 +20,12 @@ fn gen_ste() -> SystemTimeError {
 }
 This may however panic from time to time. NTP could also ruin our day!
 */
+
+#[cfg(test)]
+mod test {
+    no_panic_test!(
+        duration => Duration,
+        instant  => Instant,
+        system_time => SystemTime
+    );
+}

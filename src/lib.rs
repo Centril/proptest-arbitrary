@@ -125,8 +125,6 @@ extern crate frunk_core;
 #[macro_use]
 extern crate derive_more;
 
-extern crate init_with;
-
 //==============================================================================
 // proptest:
 //==============================================================================
@@ -470,8 +468,6 @@ pub use params::*;
 
 mod primitives;
 pub use primitives::*;
-
-pub mod bits;
 
 mod _std;
 pub use _std::*;

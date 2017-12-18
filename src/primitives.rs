@@ -49,3 +49,15 @@ pub struct CharParam<'a> {
 arbitrary!(char, char::CharStrategy<'a>, CharParam<'a>; args => {
     char::CharStrategy::new(args.special, args.preferred, args.ranges)
 });
+
+#[cfg(test)]
+mod test {
+    no_panic_test!(
+        bool => bool,
+        char => char,
+        f32 => f32, f64 => f64,
+        isize => isize, usize => usize,
+        i8 => i8, i16 => i16, i32 => i32, i64 => i64,
+        u8 => u8, u16 => u16, u32 => u32, u64 => u64
+    );
+}

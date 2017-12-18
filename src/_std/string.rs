@@ -1,9 +1,7 @@
-//==============================================================================
-// String:
-//==============================================================================
+//! Arbitrary implementations for `std::string`.
 
 use super::*;
-use std::string::{String, FromUtf8Error, FromUtf16Error, ParseError};
+use std::string::{String, FromUtf8Error, FromUtf16Error};
 use std::iter;
 use std::slice;
 use std::rc::Rc;
@@ -45,7 +43,12 @@ macro_rules! dst_wrapped {
 dst_wrapped!(Box, Rc, Arc);
 
 generator!(FromUtf16Error, || String::from_utf16(&[0xD800]).unwrap_err());
-generator!(ParseError, || panic!());
+
+// This is a void-like type, it needs to be handled by the user of
+// the type by simply never constructing the variant in an enum or for
+// structs by inductively not generating the struct.
+// The same applies to ! and Infallible.
+// generator!(ParseError, || panic!());
 
 arbitrary!(FromUtf8Error, SFnPtrMap<BoxedStrategy<Vec<u8>>, Self>;
     static_map(not_utf8_bytes(), |bytes| String::from_utf8(bytes).unwrap_err())
@@ -198,4 +201,16 @@ fn gen_el_bytes() -> BoxedStrategy<ELBytes> {
         // error_len = Some(3), w = 4
         static_map((byte01_w4, succ_byte, fail_byte), b4),
     ].boxed()
+}
+
+#[cfg(test)]
+mod test {
+    no_panic_test!(
+        string  => String,
+        str_box => Box<str>,
+        str_rc  => Rc<str>,
+        str_arc => Arc<str>,
+        from_utf16_error => FromUtf16Error,
+        from_utf8_error => FromUtf8Error
+    );
 }

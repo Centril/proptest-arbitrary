@@ -1,4 +1,4 @@
-//! Arbitrary for `std::cell`.
+//! Arbitrary implementations for `std::cell`.
 
 use std::cell::{Cell, RefCell, UnsafeCell, BorrowError, BorrowMutError};
 
@@ -34,3 +34,12 @@ generator!(BorrowMutError, || {
         ret
     }
 });
+
+#[cfg(test)]
+mod test {
+    no_panic_test!(
+        cell => Cell<u8>,
+        ref_cell => RefCell<u8>,
+        unsafe_cell => UnsafeCell<u8>
+    );
+}

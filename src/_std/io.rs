@@ -1,3 +1,5 @@
+//! Arbitrary implementations for `std::io`.
+
 use super::*;
 use std::io::*;
 use std::io::ErrorKind::*;
@@ -111,3 +113,32 @@ arbitrary!(CharsError, SMapped<'a, Option<Error>, Self>;
         if let Some(e) = oe { Other(e) } else { NotUtf8 }
     })
 );
+
+#[cfg(test)]
+mod test {
+    no_panic_test!(
+        buf_reader  => BufReader<Repeat>,
+        buf_writer  => BufWriter<Sink>,
+        line_writer => LineWriter<Sink>,
+        chain       => Chain<Empty, BufReader<Repeat>>,
+        cursor      => Cursor<Empty>,
+        empty       => Empty,
+        sink        => Sink,
+        stderr      => Stderr,
+        stdin       => Stdin,
+        stdout      => Stdout,
+        lines       => Lines<Empty>,
+        repeat      => Repeat,
+        spit        => Split<Cursor<Vec<u8>>>,
+        take        => Take<Repeat>,
+        error_kind  => ErrorKind,
+        seek_from   => SeekFrom,
+        error       => Error
+    );
+
+    #[cfg(feature = "nightly")]
+    no_panic_test!(
+        chars       => Chars<Repeat>,
+        chars_error => CharsError
+    );
+}

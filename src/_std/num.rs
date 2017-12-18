@@ -1,3 +1,5 @@
+//! Arbitrary implementations for `std::num`.
+
 use super::*;
 use std::num::*;
 
@@ -26,3 +28,18 @@ arbitrary!(FpCategory,
         ]
     }
 );
+
+#[cfg(test)]
+mod test {
+    no_panic_test!(
+        parse_float_error => ParseFloatError,
+        parse_int_error => ParseIntError,
+        wrapping => Wrapping<u8>,
+        fp_category => FpCategory
+    );
+
+    #[cfg(feature = "nightly")]
+    no_panic_test!(
+        try_from_int_error => TryFromIntError
+    );
+}

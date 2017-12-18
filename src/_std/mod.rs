@@ -1,4 +1,4 @@
-//! Arbitrary implementations for `std`.
+//! Arbitrary implementations for libstd.
 
 use super::*;
 

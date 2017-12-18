@@ -1,3 +1,5 @@
+//! Arbitrary implementations for `std::fs`.
+
 use super::*;
 use std::fs::{DirBuilder};
 
@@ -10,3 +12,8 @@ arbitrary!(DirBuilder, SMapped<'a, bool, Self>; {
         db
     })
 });
+
+#[cfg(test)]
+mod test {
+    no_panic_test!(dir_builder => DirBuilder);
+}

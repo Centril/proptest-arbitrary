@@ -165,3 +165,11 @@ arbitrary!(SizeBounds, FMapped<'a, Range<usize>, Self>;
 #[derive(Clone, PartialEq, Eq, Hash, Debug, From, Into)]
 #[cfg_attr(feature = "frunk", derive(Generic))]
 pub struct SizeBounds(Range<usize>);
+
+#[cfg(test)]
+mod test {
+    no_panic_test!(
+        probability => Probability,
+        size_bounds => SizeBounds
+    );
+}

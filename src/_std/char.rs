@@ -21,6 +21,7 @@ impl_wrap_char!(ToLowercase,   char::to_lowercase);
 impl_wrap_char!(ToUppercase,   char::to_uppercase);
 
 #[cfg(feature = "nightly")]
+// TODO: Make generic over all Iterator<Item = u8>?
 arbitrary!(DecodeUtf8<<Vec<u8> as IntoIterator>::IntoIter>,
     Flatten<Mapped<'a, u16, SMapped<'a, Vec<u8>, Self>>>;
     any::<u16>().prop_flat_map(|size| any_with_smap(
@@ -30,6 +31,7 @@ arbitrary!(DecodeUtf8<<Vec<u8> as IntoIterator>::IntoIter>,
 );
 
 #[cfg(MIN_VER_1_24_0)]
+// TODO: Make generic over all Iterator<Item = u16>?
 arbitrary!(DecodeUtf16<<Vec<u16> as IntoIterator>::IntoIter>,
     Flatten<Mapped<'a, u16, SMapped<'a, Vec<u16>, Self>>>;
     any::<u16>().prop_flat_map(|size| any_with_smap(
@@ -53,3 +55,27 @@ arbitrary!(DecodeUtf16Error, SFnPtrMap<Range<u16>, Self>;
     static_map(0xD800..0xE000, |x|
         decode_utf16(once(x)).next().unwrap().unwrap_err())
 );
+
+#[cfg(test)]
+mod test {
+    no_panic_test!(
+        escape_debug => EscapeDebug,
+        escape_default => EscapeDefault,
+        escape_unicode => EscapeUnicode,
+        parse_char_error => ParseCharError,
+        decode_utf16_error => DecodeUtf16Error
+    );
+
+    #[cfg(MIN_VER_1_24_0)]
+    no_panic_test!(
+        to_lowercase => ToLowercase,
+        to_uppercase => ToUppercase,
+        decode_utf16 => DecodeUtf16<<Vec<u16> as IntoIterator>::IntoIter>
+    );
+
+    #[cfg(feature = "nightly")]
+    no_panic_test!(
+        decode_utf8 => DecodeUtf8<<Vec<u8> as IntoIterator>::IntoIter>,
+        char_try_from_error => CharTryFromError
+    );
+}

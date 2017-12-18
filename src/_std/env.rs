@@ -1,8 +1,12 @@
+//! Arbitrary implementations for `std::env`.
+
 use super::*;
 use std::env::*;
 use std::iter::once;
 use std::ffi::OsString;
 use proptest::collection::vec;
+
+// FIXME: SplitPaths when lifetimes in strategies are possible.
 
 generator!(
     Args, args;
@@ -83,41 +87,14 @@ arbitrary!(VarError,
     ]
 );
 
-// FIXME: SplitPaths when lifetimes in strategies are possible.
-
-/*
 #[cfg(test)]
-mod tests {
-    use any;//::*;
-    use any_with;
-    use super::super::*;
-    use proptest::collection::vec;
-    use std::ops::Range;
-
-    use super::*;
-
-    fn size(r: Range<usize>) -> SizeBounds {
-        r.into()
-    }
-    proptest! {
-        #[test]
-        fn foo(ref s in any_with::<Vec<u8>>( size_bounds(0..5).lift_into() )) {
-
-        }
-
-        #[test]
-        fn bar(ref s in any_with::<VarError>(())) {
-
-        }
-
-
-    /*
-        #[test]
-        fn foo(ref stuff in any_with::<Vec<u8>, _>(
-            size(10..11).lift_into())) {
-            prop_assert_eq!(stuff.len(), 10);
-        }
-    */
-    }
+mod test {
+    no_panic_test!(
+        args => Args,
+        args_os => ArgsOs,
+        vars => Vars,
+        vars_os => VarsOs,
+        join_paths_error => JoinPathsError,
+        var_error => VarError
+    );
 }
-*/

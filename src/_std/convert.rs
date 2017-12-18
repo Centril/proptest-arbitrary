@@ -1,7 +1,7 @@
 //! Arbitrary implementations for `std::convert`.
 
-#[cfg(feature = "nightly")]
-use std::convert::Infallible;
-
-#[cfg(feature = "nightly")]
-gen_strat!(Infallible, || panic!());
+// No sensible Arbitrary impl exists for void-like types like
+// std::convert::Infallible.
+//
+// Auto-deriving should take care to simply not include such
+// types in generation instead!

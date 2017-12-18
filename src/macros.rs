@@ -88,3 +88,23 @@ macro_rules! generator {
         )+
     };
 }
+
+//==============================================================================
+// Macros for testing:
+//==============================================================================
+
+#[cfg(test)]
+macro_rules! no_panic_test {
+    ($($module: ident => $self: ty),+) => {
+        $(
+            mod $module {
+                #[allow(unused_imports)]
+                use super::super::*;
+                proptest! {
+                    #[test]
+                    fn no_panic(_ in $crate::any::<$self>()) {}
+                }
+            }
+        )+
+    };
+}

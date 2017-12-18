@@ -1,3 +1,5 @@
+//! Arbitrary implementations for `std::str`.
+
 use super::*;
 use std::iter::repeat;
 use std::str::{ParseBoolError, Utf8Error, from_utf8};
@@ -24,3 +26,11 @@ arbitrary!(Utf8Error, SFnPtrMap<(StrategyType<'a, u16>, ELSeqs), Utf8Error>;
         from_utf8(&v).unwrap_err()
     })
 );
+
+#[cfg(test)]
+mod test {
+    no_panic_test!(
+        parse_bool_errror => ParseBoolError,
+        utf8_error => Utf8Error
+    );
+}

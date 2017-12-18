@@ -1,3 +1,5 @@
+//! Arbitrary implementations for `std::ops`.
+
 use super::*;
 use std::ops::*;
 
@@ -34,3 +36,20 @@ arbitrary!(
         ]
     }
 );
+
+#[cfg(test)]
+mod test {
+    no_panic_test!(
+        range_full => RangeFull,
+        range_from => RangeFrom<usize>,
+        range_to   => RangeTo<usize>,
+        range      => Range<usize>
+    );
+
+    #[cfg(feature = "nightly")]
+    no_panic_test!(
+        range_to_inclusive => RangeToInclusive<usize>,
+        range_inclusive => RangeInclusive<usize>,
+        generator_state => GeneratorState<u32, u64>
+    );
+}
