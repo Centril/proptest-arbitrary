@@ -55,7 +55,7 @@ fn make_utf16_invalid(buf: &mut Vec<u16>, p: usize) {
 }
 
 /// Generates the set of `WTF-16 \ UTF-16` and makes
-/// an OsString that is not a valid String from it.
+/// an `OsString` that is not a valid String from it.
 #[cfg(target_os = "windows")]
 fn osstring_invalid_string() -> BoxedStrategy<OsString> {
     use std::os::windows::ffi::OsStringExt;

@@ -477,7 +477,7 @@ pub fn any_with<'a, A: Arbitrary<'a>>(args: A::Parameters)
 mod utils;
 use utils::*;
 pub use utils::{Mapped, FMapped as MappedF, SMapped as MappedS};
-use extras::*;
+pub use extras::*;
 mod extras;
 
 mod params;

@@ -25,7 +25,7 @@ impl_wrap_char!(ToUppercase,   char::to_uppercase);
 arbitrary!(DecodeUtf8<<Vec<u8> as IntoIterator>::IntoIter>,
     Flatten<Mapped<'a, u16, SMapped<'a, Vec<u8>, Self>>>;
     any::<u16>().prop_flat_map(|size| any_with_smap(
-        product_pack![size_bounds(..size as usize), default()].into(),
+        product_pack![size_bounds(..size as usize), default()],
         decode_utf8
     ))
 );
@@ -35,7 +35,7 @@ arbitrary!(DecodeUtf8<<Vec<u8> as IntoIterator>::IntoIter>,
 arbitrary!(DecodeUtf16<<Vec<u16> as IntoIterator>::IntoIter>,
     Flatten<Mapped<'a, u16, SMapped<'a, Vec<u16>, Self>>>;
     any::<u16>().prop_flat_map(|size| any_with_smap(
-        product_pack![size_bounds(..size as usize), default()].into(),
+        product_pack![size_bounds(..size as usize), default()],
         decode_utf16
     ))
 );
