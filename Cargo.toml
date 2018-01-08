@@ -36,7 +36,7 @@ unstable = []
 frunk = ["frunk_core", "frunk_derives"]
 
 [dependencies]
-proptest = "0.3.2"
+proptest = "0.3.4"
 
 frunk_core = { version = "0.0.21", optional = true }
     #{ git = "https://github.com/Centril/frunk", branch = "feature/partial-default-and-conversions" }
