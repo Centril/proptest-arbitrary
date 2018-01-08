@@ -1,6 +1,6 @@
 [package]
 name          = "proptest-arbitrary"
-version       = "0.2.1"
+version       = "0.2.2"
 authors       = ["Mazdak Farrokhzad <twingoow@gmail.com>"]
 license       = "MIT/Apache-2.0"
 readme        = "README.md"
