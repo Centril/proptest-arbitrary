@@ -12,21 +12,32 @@ wrap_ctor!(RangeToInclusive, |a| ..=a);
 
 #[cfg(feature = "unstable")]
 arbitrary!(
-    [A: PartialOrd + Arbitrary<'a>] RangeInclusive<A>,
-    SMapped<'a, (A, A), Self>, product_type![A::Parameters, A::Parameters];
+    [A: PartialOrd + Arbitrary] RangeInclusive<A>,
+    SMapped<(A, A), Self>, product_type![A::Parameters, A::Parameters];
     args => any_with_smap(args, |(a, b)| if b < a { b..=a } else { a..=b })
 );
 
+#[cfg(feature = "unstable")]
+lift1!([PartialOrd] RangeInclusive<A>; base => {
+    let base = ::std::sync::Arc::new(base);
+    (base.clone(), base).prop_map(|(a, b)| if b < a { b..=a } else { a..=b })
+});
+
 arbitrary!(
-    [A: PartialOrd + Arbitrary<'a>] Range<A>,
-    SMapped<'a, (A, A), Self>, product_type![A::Parameters, A::Parameters];
+    [A: PartialOrd + Arbitrary] Range<A>,
+    SMapped<(A, A), Self>, product_type![A::Parameters, A::Parameters];
     args => any_with_smap(args, |(a, b)| if b < a { b..a } else { a..b })
 );
 
+lift1!([PartialOrd] Range<A>; base => {
+    let base = ::std::sync::Arc::new(base);
+    (base.clone(), base).prop_map(|(a, b)| if b < a { b..a } else { a..b })
+});
+
 #[cfg(feature = "unstable")]
 arbitrary!(
-    [Y: Arbitrary<'a>, R: Arbitrary<'a>] GeneratorState<Y, R>,
-    TupleUnion<(W<SMapped<'a, Y, Self>>, W<SMapped<'a, R, Self>>)>,
+    [Y: Arbitrary, R: Arbitrary] GeneratorState<Y, R>,
+    TupleUnion<(W<SMapped<Y, Self>>, W<SMapped<R, Self>>)>,
     product_type![Y::Parameters, R::Parameters];
     args => {
         let product_unpack![y, r] = args;
@@ -36,6 +47,27 @@ arbitrary!(
         ]
     }
 );
+
+#[cfg(feature = "unstable")]
+impl<A: Debug + 'static, B: Debug + 'static>
+    functor::ArbitraryF2<A, B>
+for GeneratorState<A, B> {
+    type Parameters = ();
+
+    fn lift2_with<AS, BS>(fst: AS, snd: BS, _args: Self::Parameters)
+        -> BoxedStrategy<Self>
+    where
+        AS: Strategy + 'static,
+        AS::Value: ValueTree<Value = A>,
+        BS: Strategy + 'static,
+        BS::Value: ValueTree<Value = B>
+    {
+        prop_oneof![
+            fst.prop_map(GeneratorState::Yielded),
+            snd.prop_map(GeneratorState::Complete)
+        ].boxed()
+    }
+}
 
 #[cfg(test)]
 mod test {

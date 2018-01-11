@@ -10,8 +10,8 @@ use std::io::ErrorKind::*;
 macro_rules! buffer {
     ($type: ident, $bound: path) => {
         arbitrary!(
-            [A: Arbitrary<'a> + $bound] $type<A>,
-            SMapped<'a, (A, Option<u16>), Self>, A::Parameters;
+            [A: Arbitrary + $bound] $type<A>,
+            SMapped<(A, Option<u16>), Self>, A::Parameters;
             args => any_with_smap(product_pack![args, default()], |(inner, cap)|
                 if let Some(cap) = cap {
                     $type::with_capacity(cap as usize, inner)
@@ -19,6 +19,16 @@ macro_rules! buffer {
                     $type::new(inner)
                 }
             )
+        );
+
+        lift1!([$bound] $type<A>; base =>
+            (base, any::<Option<u16>>()).prop_map(|(inner, cap)| {
+                if let Some(cap) = cap {
+                    $type::with_capacity(cap as usize, inner)
+                } else {
+                    $type::new(inner)
+                }
+            })
         );
     };
 }
@@ -28,8 +38,8 @@ buffer!(BufWriter,  Write);
 buffer!(LineWriter, Write);
 
 arbitrary!(
-    [A: Read + Arbitrary<'a>, B: Read + Arbitrary<'a>] Chain<A, B>,
-    SMapped<'a, (A, B), Self>, product_type![A::Parameters, B::Parameters];
+    [A: Read + Arbitrary, B: Read + Arbitrary] Chain<A, B>,
+    SMapped<(A, B), Self>, product_type![A::Parameters, B::Parameters];
     args => any_with_smap(args, |(a, b)| a.chain(b))
 );
 
@@ -45,19 +55,21 @@ generator!(
 
 wrap_ctor!([BufRead] Lines, BufRead::lines);
 
-arbitrary!(Repeat, SMapped<'a, u8, Self>; any_with_smap((), repeat));
+arbitrary!(Repeat, SMapped<u8, Self>; any_with_smap((), repeat));
 
 arbitrary!(
-    [A: BufRead + Arbitrary<'a>] Split<A>,
-    SMapped<'a, (A, u8), Self>, A::Parameters;
+    [A: BufRead + Arbitrary] Split<A>, SMapped<(A, u8), Self>, A::Parameters;
     args => any_with_smap(product_pack![args, default()], |(a, b)| a.split(b))
 );
+lift1!(['static + BufRead] Split<A>;
+    base => (base, any::<u8>()).prop_map(|(a, b)| a.split(b)));
 
 arbitrary!(
-    [A: Read + Arbitrary<'a>] Take<A>,
-    SMapped<'a, (A, u64), Self>, A::Parameters;
+    [A: Read + Arbitrary] Take<A>, SMapped<(A, u64), Self>, A::Parameters;
     args => any_with_smap(product_pack![args, default()], |(a, b)| a.take(b))
 );
+lift1!(['static + Read] Take<A>;
+    base => (base, any::<u64>()).prop_map(|(a, b)| a.take(b)));
 
 #[cfg(feature = "unstable")]
 wrap_ctor!([Read] Chars, Read::chars);
@@ -89,9 +101,9 @@ arbitrary!(ErrorKind, Union<Just<Self>>;
 arbitrary!(
     SeekFrom,
     TupleUnion<(
-        W<SMapped<'a, u64, SeekFrom>>,
-        W<SMapped<'a, i64, SeekFrom>>,
-        W<SMapped<'a, i64, SeekFrom>>,
+        W<SMapped<u64, SeekFrom>>,
+        W<SMapped<i64, SeekFrom>>,
+        W<SMapped<i64, SeekFrom>>,
     )>;
     prop_oneof![
         static_map(any::<u64>(), SeekFrom::Start),
@@ -100,14 +112,14 @@ arbitrary!(
     ]
 );
 
-arbitrary!(Error, SMapped<'a, (ErrorKind, Option<String>), Self>;
+arbitrary!(Error, SMapped<(ErrorKind, Option<String>), Self>;
     any_with_smap(default(), |(k, os)|
         if let Some(s) = os { Error::new(k, s) } else { k.into() }
     )
 );
 
 #[cfg(feature = "unstable")]
-arbitrary!(CharsError, SMapped<'a, Option<Error>, Self>;
+arbitrary!(CharsError, SMapped<Option<Error>, Self>;
     any_with_smap(default(), |oe| {
         use std::io::CharsError::*;
         if let Some(e) = oe { Other(e) } else { NotUtf8 }

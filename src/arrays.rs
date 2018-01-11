@@ -6,7 +6,7 @@ use proptest::array::UniformArrayStrategy;
 
 macro_rules! array {
     ($($n: expr),*) => { $(
-        impl<'a, A: Arbitrary<'a>> Arbitrary<'a> for [A; $n] {
+        impl<A: Arbitrary> Arbitrary for [A; $n] {
             valuetree!();
             type Parameters = A::Parameters;
             type Strategy = UniformArrayStrategy<A::Strategy, [A; $n]>;

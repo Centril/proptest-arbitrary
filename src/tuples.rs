@@ -6,7 +6,7 @@ use super::*;
 
 macro_rules! impl_tuple {
     ($($typ: ident),*) => {
-        impl<'a, $($typ : Arbitrary<'a>),*> Arbitrary<'a> for ($($typ,)*) {
+        impl<$($typ : Arbitrary),*> Arbitrary for ($($typ,)*) {
             valuetree!();
             type Parameters = product_type![$($typ::Parameters,)*];
             type Strategy = ($($typ::Strategy,)*);

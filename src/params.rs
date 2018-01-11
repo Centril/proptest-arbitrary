@@ -47,7 +47,7 @@ impl Probability {
     // Don't rely on these existing internally:
 
     /// Merges self together with some other argument producing a product
-    /// type expected by some impelementations of `A: Arbitrary<'a>` in
+    /// type expected by some impelementations of `A: Arbitrary` in
     /// `A::Parameters`. This can be more ergonomic to work with and may
     /// help type inference.
     pub fn with<X>(self, and: X) -> product_type![Self, X] {
@@ -56,7 +56,7 @@ impl Probability {
 
     /// Merges self together with some other argument generated with a
     /// default value producing a product type expected by some
-    /// impelementations of `A: Arbitrary<'a>` in `A::Parameters`.
+    /// impelementations of `A: Arbitrary` in `A::Parameters`.
     /// This can be more ergonomic to work with and may help type inference.
     pub fn lift<X: Default>(self) -> product_type![Self, X] {
         self.with(default())
@@ -82,11 +82,15 @@ impl Generic for Probability {
     /// # Safety
     ///
     /// Panics if the probability is outside interval `[0.0, 1.0]`.
-    fn from(r: Self::Repr) -> Self { prob(r) }
+    fn from(r: Self::Repr) -> Self { r.into() }
+}
+
+impl From<Probability> for f64 {
+    fn from(p: Probability) -> Self { p.0 }
 }
 
 /// A probability in the range `[0.0, 1.0]` with a default of `0.5`.
-#[derive(Clone, Copy, PartialEq, Debug, Into)]
+#[derive(Clone, Copy, PartialEq, Debug)]
 pub struct Probability(f64);
 
 //==============================================================================
@@ -109,7 +113,7 @@ impl SizeBounds {
     // Don't rely on these existing internally:
 
     /// Merges self together with some other argument producing a product
-    /// type expected by some impelementations of `A: Arbitrary<'a>` in
+    /// type expected by some impelementations of `A: Arbitrary` in
     /// `A::Parameters`. This can be more ergonomic to work with and may
     /// help type inference.
     pub fn with<X>(self, and: X) -> product_type![Self, X] {
@@ -118,7 +122,7 @@ impl SizeBounds {
 
     /// Merges self together with some other argument generated with a
     /// default value producing a product type expected by some
-    /// impelementations of `A: Arbitrary<'a>` in `A::Parameters`.
+    /// impelementations of `A: Arbitrary` in `A::Parameters`.
     /// This can be more ergonomic to work with and may help type inference.
     pub fn lift<X: Default>(self) -> product_type![Self, X] {
         self.with(default())
@@ -134,16 +138,32 @@ impl From<(usize, usize)> for SizeBounds {
 
 /// Given `exact`, then a range `[exact..exact + 1)` is the result.
 impl From<usize> for SizeBounds {
-    fn from(exact: usize) -> Self {
-        size_bounds(exact..exact + 1)
-    }
+    fn from(exact: usize) -> Self { size_bounds(exact..exact + 1) }
 }
 
 /// Given `..high`, then a range `[0..high)` is the result.
 impl From<RangeTo<usize>> for SizeBounds {
-    fn from(high: RangeTo<usize>) -> Self {
-        size_bounds(0..high.end)
-    }
+    fn from(high: RangeTo<usize>) -> Self { size_bounds(0..high.end) }
+}
+
+/// Given `low..high`, then a range `[low..high)` is the result.
+impl From<Range<usize>> for SizeBounds {
+    fn from(x: Range<usize>) -> Self { SizeBounds(x) }
+}
+
+impl From<SizeBounds> for Range<usize> {
+    fn from(x: SizeBounds) -> Self { x.0 }
+}
+
+#[cfg(feature = "frunk")]
+impl Generic for SizeBounds {
+    type Repr = Range<usize>;
+
+    /// Converts the `SizeBounds` into `Range<usize>`.
+    fn into(self) -> Self::Repr { self.0 }
+
+    /// Converts `Range<usize>` into `SizeBounds`.
+    fn from(r: Self::Repr) -> Self { r.into() }
 }
 
 /// Adds `usize` to both start and end of the bounds.
@@ -156,14 +176,13 @@ impl Add<usize> for SizeBounds {
     }
 }
 
-arbitrary!(SizeBounds, FMapped<'a, Range<usize>, Self>;
+arbitrary!(SizeBounds, FMapped<Range<usize>, Self>;
     any_sinto::<Range<usize>, _>()
 );
 
 /// The minimum and maximum bounds on the size of a collection.
 /// The interval must form a subset of `[0, std::usize::MAX)`.
-#[derive(Clone, PartialEq, Eq, Hash, Debug, From, Into)]
-#[cfg_attr(feature = "frunk", derive(Generic))]
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
 pub struct SizeBounds(Range<usize>);
 
 #[cfg(test)]

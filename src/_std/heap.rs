@@ -25,7 +25,7 @@ arbitrary!(Layout, BoxedStrategy<Layout>;
     }).boxed()
 );
 
-arbitrary!(AllocErr, TupleUnion<(W<SMapped<'a, Layout, Self>>, W<Just<Self>>)>;
+arbitrary!(AllocErr, TupleUnion<(W<SMapped<Layout, Self>>, W<Just<Self>>)>;
     prop_oneof![
         static_map(any::<Layout>(), |request| AllocErr::Exhausted { request }),
         Just(AllocErr::Unsupported {

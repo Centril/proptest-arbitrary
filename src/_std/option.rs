@@ -4,9 +4,7 @@ use super::*;
 use std::option as opt;
 use proptest::option::{self, OptionStrategy};
 
-arbitrary!(
-    [A: Arbitrary<'a>] opt::Option<A>,
-    OptionStrategy<A::Strategy>,
+arbitrary!([A: Arbitrary] opt::Option<A>, OptionStrategy<A::Strategy>,
     product_type![Probability, A::Parameters];
     args => {
         let product_unpack![prob, a] = args;
@@ -14,10 +12,18 @@ arbitrary!(
     }
 );
 
-arbitrary!([A: Arbitrary<'a>] opt::IntoIter<A>,
-    SMapped<'a, opt::Option<A>, Self>,
-    <opt::Option<A> as Arbitrary<'a>>::Parameters;
+lift1!([] opt::Option<A>, Probability;
+    base, prob => option::weighted(prob.into(), base)
+);
+
+arbitrary!([A: Arbitrary] opt::IntoIter<A>, SMapped<opt::Option<A>, Self>,
+    <opt::Option<A> as Arbitrary>::Parameters;
     args => any_with_smap(args, Option::into_iter));
+
+lift1!(['static] opt::IntoIter<A>, Probability;
+    base, prob => option::weighted(prob.into(), base)
+                    .prop_map(Option::into_iter)
+);
 
 #[cfg(feature = "unstable")]
 arbitrary!(opt::NoneError; opt::NoneError);

@@ -22,12 +22,12 @@ use std::borrow::Cow;
 /// An inclusive char range from fst to snd.
 /// TODO: replace with `std::ops::RangeInclusive<char>` once stabilized.
 type CharRange = (char, char);
-type CowSlices<'a, T> = Cow<'a, [T]>;
+type CowSlices<T> = Cow<'static, [T]>;
 
 const WHOLE_RANGE: &[CharRange] = &[('\x00', ::std::char::MAX)];
 
 /// Equivalent to `proptest::char::ANY`.
-impl<'a> Default for CharParam<'a> {
+impl Default for CharParam {
     fn default() -> Self {
         Self {
             special: Cow::Borrowed(char::DEFAULT_SPECIAL_CHARS),
@@ -38,15 +38,14 @@ impl<'a> Default for CharParam<'a> {
 }
 
 /// Parameters to pass to `proptest::char::CharStrategy::new(..)`.
-#[derive(Clone, PartialEq, Eq, Hash, Debug, From, Into)]
-#[cfg_attr(feature = "frunk", derive(Generic))]
-pub struct CharParam<'a> {
-    special: CowSlices<'a, char>,
-    preferred: CowSlices<'a, CharRange>,
-    ranges: CowSlices<'a, CharRange>,
+#[derive(Clone, PartialEq, Eq, Hash, Debug)]
+pub struct CharParam {
+    special: CowSlices<char>,
+    preferred: CowSlices<CharRange>,
+    ranges: CowSlices<CharRange>,
 }
 
-arbitrary!(char, char::CharStrategy<'a>, CharParam<'a>; args => {
+arbitrary!(char, char::CharStrategy<'static>, CharParam; args => {
     char::CharStrategy::new(args.special, args.preferred, args.ranges)
 });
 

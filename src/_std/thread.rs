@@ -3,7 +3,7 @@
 use super::*;
 use std::thread::*;
 
-arbitrary!(Builder, SMapped<'a, (Option<usize>, Option<String>), Self>; {
+arbitrary!(Builder, SMapped<(Option<usize>, Option<String>), Self>; {
     let prob = prob(0.7);
     let args = product_pack![
         product_pack![prob, default()],

@@ -3,7 +3,7 @@
 use super::*;
 use std::time::*;
 
-arbitrary!(Duration, SMapped<'a, (u64, u32), Self>;
+arbitrary!(Duration, SMapped<(u64, u32), Self>;
     static_map(any::<(u64, u32)>(), |(a, b)| Duration::new(a, b))
 );
 

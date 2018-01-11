@@ -15,17 +15,17 @@ arbitrary!(CString,
     })
 );
 
-arbitrary!(OsString, FMapped<'a, String, Self>,
-    <String as Arbitrary<'a>>::Parameters; a => any_with_sinto::<String, _>(a)
+arbitrary!(OsString, FMapped<String, Self>,
+    <String as Arbitrary>::Parameters; a => any_with_sinto::<String, _>(a)
 );
 
 macro_rules! dst_wrapped {
     ($($w: ident),*) => {
-        $(arbitrary!($w<CStr>, FMapped<'a, CString, Self>, SizeBounds;
+        $(arbitrary!($w<CStr>, FMapped<CString, Self>, SizeBounds;
             a => any_with_sinto::<CString, _>(a)
         );)*
-        $(arbitrary!($w<OsStr>, FMapped<'a, OsString, Self>,
-            <String as Arbitrary<'a>>::Parameters;
+        $(arbitrary!($w<OsStr>, FMapped<OsString, Self>,
+            <String as Arbitrary>::Parameters;
             a => any_with_sinto::<OsString, _>(a)
         );)*
     };
@@ -40,7 +40,7 @@ use std::sync::Arc;
 #[cfg(MIN_VER_1_24_0)]
 dst_wrapped!(Rc, Arc);
 
-arbitrary!(FromBytesWithNulError, SMapped<'a, Option<u16>, Self>; {
+arbitrary!(FromBytesWithNulError, SMapped<Option<u16>, Self>; {
     static_map(any::<Option<u16>>(), |opt_pos| {
         // We make some assumptions about the internal structure of
         // FromBytesWithNulError. However, these assumptions do not

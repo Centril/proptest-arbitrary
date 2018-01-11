@@ -11,36 +11,36 @@ pub (crate) use proptest::strategy::statics::{
     //FilterFn as SFilterFn,
 };
 
-pub (crate) fn any_with_map<'a, A, B, F>(args: A::Parameters, fun: F)
-    -> Map<StrategyType<'a, A>, F>
+pub (crate) fn any_with_map<A, B, F>(args: A::Parameters, fun: F)
+    -> Map<StrategyFor<A>, F>
 where
-    A: Arbitrary<'a>,
+    A: Arbitrary,
     B: Debug,
     F: Fn(A) -> B,
 {
     any_with::<A>(args).prop_map(fun)
 }
 
-pub (crate) fn any_with_sinto<'a, A, B>(args: A::Parameters)
-    -> FMapped<'a, A, B>
-where A: Arbitrary<'a>,
+pub (crate) fn any_with_sinto<A, B>(args: A::Parameters)
+    -> FMapped<A, B>
+where A: Arbitrary,
       B: Debug + From<A>
 {
     from_map_strategy(any_with::<A>(args))
 }
 
-pub (crate) fn any_sinto<'a, A, B>()
-    -> FMapped<'a, A, B>
-where A: Arbitrary<'a>,
+pub (crate) fn any_sinto<A, B>()
+    -> FMapped<A, B>
+where A: Arbitrary,
       B: Debug + From<A>
 {
     from_map_strategy(any::<A>())
 }
 
-pub (crate) fn any_with_smap<'a, A, B>(args: A::Parameters, fun: fn(A) -> B)
-    -> SMapped<'a, A, B>
+pub (crate) fn any_with_smap<A, B>(args: A::Parameters, fun: fn(A) -> B)
+    -> SMapped<A, B>
 where
-    A: Arbitrary<'a>,
+    A: Arbitrary,
     B: Debug,
 {
     static_map(any_with::<A>(args), fun)
@@ -107,7 +107,7 @@ pub (crate) fn from_map_strategy<S: Strategy, O>(strat: S)
 }
 
 /// A map from a strategy of `I` to `O` using the `From` trait for conversion.
-pub type FMapped<'a, I, O> = FromMapStrategy<StrategyType<'a, I>, O>;
+pub type FMapped<I, O> = FromMapStrategy<StrategyFor<I>, O>;
 
 //==============================================================================
 // FnMap + static_map:
@@ -139,11 +139,11 @@ where
 }
 
 /// A static map from a strategy of `I` to `O`.
-pub type SMapped<'a, I, O> = SMap<StrategyType<'a, I>, SFnMap<I, O>>;
+pub type SMapped<I, O> = SMap<StrategyFor<I>, SFnMap<I, O>>;
 
 //==============================================================================
 // FnMap + static_map:
 //==============================================================================
 
 /// A normal map from a strategy of `I` to `O`.
-pub type Mapped<'a, I, O> = Map<StrategyType<'a, I>, fn(I) -> O>;
+pub type Mapped<I, O> = Map<StrategyFor<I>, fn(I) -> O>;

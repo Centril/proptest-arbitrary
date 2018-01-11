@@ -20,7 +20,7 @@ macro_rules! valuetree {
 macro_rules! arbitrary {
     ([$($bounds : tt)*] $typ: ty, $strat: ty, $params: ty;
         $args: ident => $logic: expr) => {
-        impl<'a, $($bounds)*> $crate::Arbitrary<'a> for $typ {
+        impl<$($bounds)*> $crate::Arbitrary for $typ {
             valuetree!();
             type Parameters = $params;
             type Strategy = $strat;
@@ -63,9 +63,11 @@ macro_rules! wrap_ctor {
         wrap_ctor!([$($bound)*] $wrap, $wrap::new);
     };
     ([$($bound : tt)*] $wrap: ident, $maker: expr) => {
-        arbitrary!([A: $crate::Arbitrary<'a> + $($bound)*] $wrap<A>,
-            $crate::SMapped<'a, A, Self>, A::Parameters;
+        arbitrary!([A: $crate::Arbitrary + $($bound)*] $wrap<A>,
+            $crate::SMapped<A, Self>, A::Parameters;
             args => $crate::any_with_smap(args, $maker));
+
+        lift1!([$($bound)*] $wrap<A>; $maker);
     };
 }
 
@@ -74,9 +76,11 @@ macro_rules! wrap_from {
         wrap_from!([] $wrap);
     };
     ([$($bound : tt)*] $wrap: ident) => {
-        arbitrary!([A: $crate::Arbitrary<'a> + $($bound)*] $wrap<A>,
-            $crate::FMapped<'a, A, Self>, A::Parameters;
+        arbitrary!([A: $crate::Arbitrary + $($bound)*] $wrap<A>,
+            $crate::FMapped<A, Self>, A::Parameters;
             args => $crate::any_with_sinto::<A, $wrap<A>>(args));
+
+        lift1!([$($bound)*] $wrap<A>);
     };
 }
 

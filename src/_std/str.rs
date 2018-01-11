@@ -18,7 +18,7 @@ fn gen_el_seqs() -> ELSeqs {
     ]
 }
 
-arbitrary!(Utf8Error, SFnPtrMap<(StrategyType<'a, u16>, ELSeqs), Utf8Error>;
+arbitrary!(Utf8Error, SFnPtrMap<(StrategyFor<u16>, ELSeqs), Utf8Error>;
     static_map((any::<u16>(), gen_el_seqs()), |(vut, elseq)| {
         let v = repeat(b'_').take(vut as usize)
                     .chain(elseq.iter().cloned())

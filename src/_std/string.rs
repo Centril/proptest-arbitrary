@@ -9,19 +9,27 @@ use std::sync::Arc;
 
 /// Wraps the regex that forms the `Strategy` for `String` so that a sensible
 /// `Default` can be given. The default is a string of non-control characters.
-#[derive(Copy, Clone, From, Into, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub struct StringParam<'a>(&'a str);
+#[derive(Copy, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct StringParam(&'static str);
 
-impl<'a> Default for StringParam<'a> {
+impl From<StringParam> for &'static str {
+    fn from(x: StringParam) -> Self { x.0 }
+}
+
+impl From<&'static str> for StringParam {
+    fn from(x: &'static str) -> Self { StringParam(x) }
+}
+
+impl Default for StringParam {
     fn default() -> Self {
         StringParam("\\PC*")
     }
 }
 
-impl<'a> Arbitrary<'a> for String {
+impl Arbitrary for String {
     valuetree!();
-    type Parameters = StringParam<'a>;
-    type Strategy = &'a str;
+    type Parameters = StringParam;
+    type Strategy = &'static str;
 
     /// ## Safety
     ///
@@ -34,7 +42,7 @@ impl<'a> Arbitrary<'a> for String {
 
 macro_rules! dst_wrapped {
     ($($w: ident),*) => {
-        $(arbitrary!($w<str>, FMapped<'a, String, Self>, StringParam<'a>;
+        $(arbitrary!($w<str>, FMapped<String, Self>, StringParam;
             a => any_with_sinto::<String, _>(a)
         );)*
     };

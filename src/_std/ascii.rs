@@ -3,7 +3,7 @@
 use super::*;
 use std::ascii::{EscapeDefault, escape_default};
 
-arbitrary!(EscapeDefault, SMapped<'a, u8, Self>, ParamsType<'a, u8>;
+arbitrary!(EscapeDefault, SMapped<u8, Self>, ParamsFor<u8>;
     args => any_with_smap(args, escape_default)
 );
 

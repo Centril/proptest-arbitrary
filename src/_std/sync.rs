@@ -23,7 +23,7 @@ wrap_ctor!(RwLock);
 #[cfg(MIN_VER_1_24_0)]
 wrap_from!(RwLock);
 
-arbitrary!(Barrier, SMapped<'a, u16, Self>;  // usize would be extreme!
+arbitrary!(Barrier, SMapped<u16, Self>;  // usize would be extreme!
     static_map(any::<u16>(), |n| Barrier::new(n as usize))
 );
 
@@ -74,7 +74,7 @@ fn wtr_true() -> WaitTimeoutResult {
 
 macro_rules! atomic {
     ($($type: ident, $base: ty);+) => {
-        $(arbitrary!($type, SMapped<'a, $base, Self>;
+        $(arbitrary!($type, SMapped<$base, Self>;
             any_with_smap((), $type::new)
         );)+
     };
@@ -101,7 +101,7 @@ arbitrary!(Ordering,
 
 arbitrary!(RecvError; RecvError);
 
-arbitrary!([T: Arbitrary<'a>] SendError<T>, SMapped<'a, T, Self>, T::Parameters;
+arbitrary!([T: Arbitrary] SendError<T>, SMapped<T, Self>, T::Parameters;
     args => any_with_smap(args, SendError)
 );
 
@@ -120,8 +120,8 @@ arbitrary!(TryRecvError, TupleUnion<(W<Just<Self>>, W<Just<Self>>)>;
 );
 
 arbitrary!(
-    [P: Clone + Default, T: Arbitrary<'a, Parameters = P>] TrySendError<T>,
-    TupleUnion<(W<SMapped<'a, T, Self>>, W<SMapped<'a, T, Self>>)>, P;
+    [P: Clone + Default, T: Arbitrary<Parameters = P>] TrySendError<T>,
+    TupleUnion<(W<SMapped<T, Self>>, W<SMapped<T, Self>>)>, P;
     args => prop_oneof![
         any_with_smap(args.clone(), TrySendError::Disconnected),
         any_with_smap(args, TrySendError::Full),
@@ -144,11 +144,11 @@ arbitrary!([A: Debug] (Sender<A>, IntoIter<A>), FnGenerator<Self>;
     })
 );
 
-arbitrary!([A] (SyncSender<A>, Receiver<A>), SMapped<'a, u16, Self>;
+arbitrary!([A] (SyncSender<A>, Receiver<A>), SMapped<u16, Self>;
     static_map(any::<u16>(), |size| sync_channel(size as usize))
 );
 
-arbitrary!([A: Debug] (SyncSender<A>, IntoIter<A>), SMapped<'a, u16, Self>;
+arbitrary!([A: Debug] (SyncSender<A>, IntoIter<A>), SMapped<u16, Self>;
     static_map(any::<u16>(), |size| {
         let (rx, tx) = sync_channel(size as usize);
         (rx, tx.into_iter())

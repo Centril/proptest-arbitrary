@@ -7,7 +7,7 @@ use std::ops::Range;
 
 macro_rules! impl_wrap_char {
     ($type: ty, $mapper: expr) => {
-        arbitrary!($type, SMapped<'a, char, Self>, ParamsType<'a, char>;
+        arbitrary!($type, SMapped<char, Self>, ParamsFor<char>;
             args => any_with_smap(args, $mapper));
     };
 }
@@ -21,9 +21,8 @@ impl_wrap_char!(ToLowercase,   char::to_lowercase);
 impl_wrap_char!(ToUppercase,   char::to_uppercase);
 
 #[cfg(feature = "unstable")]
-// TODO: Make generic over all Iterator<Item = u8>?
 arbitrary!(DecodeUtf8<<Vec<u8> as IntoIterator>::IntoIter>,
-    Flatten<Mapped<'a, u16, SMapped<'a, Vec<u8>, Self>>>;
+    Flatten<Mapped<u16, SMapped<Vec<u8>, Self>>>;
     any::<u16>().prop_flat_map(|size| any_with_smap(
         product_pack![size_bounds(..size as usize), default()],
         decode_utf8
@@ -31,16 +30,15 @@ arbitrary!(DecodeUtf8<<Vec<u8> as IntoIterator>::IntoIter>,
 );
 
 #[cfg(MIN_VER_1_24_0)]
-// TODO: Make generic over all Iterator<Item = u16>?
 arbitrary!(DecodeUtf16<<Vec<u16> as IntoIterator>::IntoIter>,
-    Flatten<Mapped<'a, u16, SMapped<'a, Vec<u16>, Self>>>;
+    Flatten<Mapped<u16, SMapped<Vec<u16>, Self>>>;
     any::<u16>().prop_flat_map(|size| any_with_smap(
         product_pack![size_bounds(..size as usize), default()],
         decode_utf16
     ))
 );
 
-arbitrary!(ParseCharError, IndFlatten<Mapped<'a, bool, Just<Self>>>;
+arbitrary!(ParseCharError, IndFlatten<Mapped<bool, Just<Self>>>;
     any::<bool>().prop_ind_flat_map(|is_two|
         Just((if is_two { "__" } else { "" }).parse::<char>().unwrap_err()))
 );
