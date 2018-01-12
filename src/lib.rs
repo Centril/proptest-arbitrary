@@ -431,3 +431,5 @@ mod tuples;
 
 // TODO: Relative likelyhood of union (optionally) based on a function:
 // (lexical_pos: usize) -> likelyhood: usize.
+
+pub mod coarbitrary;
