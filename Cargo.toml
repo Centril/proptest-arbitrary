@@ -1,6 +1,6 @@
 [package]
 name          = "proptest-arbitrary"
-version       = "0.2.2"
+version       = "0.3.0"
 authors       = ["Mazdak Farrokhzad <twingoow@gmail.com>"]
 license       = "MIT/Apache-2.0"
 readme        = "README.md"
@@ -26,22 +26,17 @@ maintenance = { status = "experimental" }
 
 [features]
 
-#default = ["frunk"]
 default = ["frunk"]
 
 # Enables nightly features of Rust.
 unstable = []
 
-# Uses frunk_core and frunk_derives for Hlist and generic.
-frunk = ["frunk_core", "frunk_derives"]
+# Uses frunk_core for Hlist and Generic.
+frunk = ["frunk_core"]
 
 [dependencies]
 proptest = "0.3.4"
 
 frunk_core = { version = "0.0.21", optional = true }
-    #{ git = "https://github.com/Centril/frunk", branch = "feature/partial-default-and-conversions" }
-frunk_derives = { version = "0.0.22", optional = true }
-    #{ git = "https://github.com/Centril/frunk", branch = "feature/partial-default-and-conversions" }
 
-derive_more = "0.7.0"
 bit-set  = "0.4.0"
