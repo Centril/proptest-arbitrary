@@ -69,7 +69,23 @@
     , mpsc_select
     , thread_local_state
     , allocator_api
+    , i128_type
+    , unicode
+    , never_type
+    , from_utf8_error_as_bytes
+    , pattern
+    , read_initializer
+    , slice_rsplit
+    , once_poison
+    , thread_local_state
+    , raw
 ))]
+
+//==============================================================================
+// Core:
+//==============================================================================
+
+extern crate core;
 
 //==============================================================================
 // Frunk:
@@ -91,7 +107,7 @@ extern crate frunk_core;
 
 #[macro_use]
 extern crate proptest;
-
+extern crate rand;
 extern crate bit_set;
 
 use std::fmt::Debug;

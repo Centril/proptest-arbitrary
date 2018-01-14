@@ -1,0 +1,1 @@
+// TODO: EscapeDefault has to be Clone. Make PR to libstd.

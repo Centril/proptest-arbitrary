@@ -37,6 +37,8 @@ frunk = ["frunk_core"]
 [dependencies]
 proptest = "0.3.4"
 
+rand = "0.3.18"
+
 frunk_core = { version = "0.0.21", optional = true }
 
 bit-set  = "0.4.0"
