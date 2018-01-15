@@ -16,38 +16,23 @@ impl CoArbitrary for ! {
 // Primitive types:
 //==============================================================================.
 
-impl CoArbitrary for bool {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.variant(if *self { 1 } else { 0 });
-    }
-}
+coarbitrary!(bool; self, var => var.variant(if *self { 1 } else { 0 }));
 
 macro_rules! coarbitrary_unsized {
     ($($typ: ty),*) => {
         $(
-            impl CoArbitrary for $typ {
-                fn coarbitrary(&self, mut var: Perturbable) {
-                    var.variant(*self as u32);
-                }
-            }
+            coarbitrary!($typ; self, var => var.variant(*self as u32));
         )*
     };
 }
 
 coarbitrary_unsized!(u8, u16, u32, i8, i16, i32);
 
-impl CoArbitrary for u64 {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.variant((*self >> (0 * 32)) as u32)
-           .variant((*self >> (1 * 32)) as u32);
-    }
-}
+coarbitrary!(u64; self, var =>
+    var.variant((*self >> (0 * 32)) as u32)
+       .variant((*self >> (1 * 32)) as u32));
 
-impl CoArbitrary for i64 {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.nest(&(*self as u64));
-    }
-}
+coarbitrary!(i64; self, var => var.nest(&(*self as u64)));
 
 impl CoArbitrary for usize {
     fn coarbitrary(&self, mut var: Perturbable) {
@@ -88,37 +73,22 @@ impl CoArbitrary for u128 {
 }
 */
 
-impl CoArbitrary for char {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.nest(&u32::from(*self));
-    }
-}
+coarbitrary!(char; self, var => var.nest(&u32::from(*self)));
 
 //==============================================================================
 // &str:
 //==============================================================================.
 
-impl<'a> CoArbitrary for &'a str {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.nest(self.as_bytes());
-    }
-}
+coarbitrary!(['a] &'a str; self, var => var.nest(self.as_bytes()));
 
 //==============================================================================
 // Reference types:
 //==============================================================================.
 
-impl<'a, A: CoArbitrary + ?Sized> CoArbitrary for &'a A {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.nest(*self);
-    }
-}
-
-impl<'a, A: CoArbitrary + ?Sized> CoArbitrary for &'a mut A {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.nest(*self);
-    }
-}
+coarbitrary!(['a, A: CoArbitrary + ?Sized] &'a A;
+    self, var => var.nest(*self));
+coarbitrary!(['a, A: CoArbitrary + ?Sized] &'a mut A;
+    self, var => var.nest(*self));
 
 //==============================================================================
 // Arrays:
@@ -126,11 +96,8 @@ impl<'a, A: CoArbitrary + ?Sized> CoArbitrary for &'a mut A {
 
 macro_rules! array {
     ($size: expr; $($idx: expr)*) => {
-        impl<A: CoArbitrary> CoArbitrary for [A; $size] {
-            fn coarbitrary(&self, mut _var: Perturbable) {
-                $( _var.nest(&self[$idx]); )*;
-            }
-        }
+        coarbitrary!([A: CoArbitrary] [A; $size];
+            self, _var => { $( _var.nest(&self[$idx]); )* });
     };
 }
 

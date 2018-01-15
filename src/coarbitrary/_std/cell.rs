@@ -2,23 +2,11 @@ use coarbitrary::*;
 
 use std::cell::*;
 
-impl<A: CoArbitrary + Copy> CoArbitrary for Cell<A> {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.nest(&self.get());
-    }
-}
+coarbitrary!([A: CoArbitrary + Copy] Cell<A>;
+    self, var => var.nest(&self.get()));
 
-impl<'b, A: CoArbitrary + ?Sized> CoArbitrary for Ref<'b, A> {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.nest(&**self);
-    }
-}
-
-impl<'b, A: CoArbitrary + ?Sized> CoArbitrary for RefMut<'b, A> {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.nest(&**self);
-    }
-}
+delegate_deref!(['b, A: CoArbitrary + ?Sized] Ref<'b, A>);
+delegate_deref!(['b, A: CoArbitrary + ?Sized] RefMut<'b, A>);
 
 impl<A: CoArbitrary + ?Sized> CoArbitrary for RefCell<A> {
     /// Perturbs the given underlying RNG according to

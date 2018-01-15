@@ -1,23 +1,46 @@
+macro_rules! coarbitrary {
+    ([$($bounds: tt)*] $typ: ty; $this: ident, $var: ident => $logic: expr) => {
+        impl<$($bounds)*> $crate::coarbitrary::CoArbitrary for $typ {
+            #[allow(unused_mut)]
+            fn coarbitrary(&$this, mut $var: $crate::coarbitrary::Perturbable) {
+                $logic;
+            }
+        }
+    };
+    ($typ: ty; $this: ident, $var: ident => $logic: expr) => {
+        coarbitrary!([] $typ; $this, $var => $logic);
+    };
+}
+
 macro_rules! delegate_iter {
     ([$($bounds: tt)*] $typ: ty) => {
         delegate_iter!([$($bounds)*] $typ, clone);
     };
     ([$($bounds: tt)*] $typ: ty, $method: ident) => {
-        impl<$($bounds)*> $crate::coarbitrary::CoArbitrary for $typ {
-            fn coarbitrary(&self, var: $crate::coarbitrary::Perturbable) {
-                $crate::coarbitrary::coarbitrary_iter(self.$method(), var);
-            }
-        }
+        coarbitrary!([$($bounds)*] $typ; self, var =>
+            $crate::coarbitrary::coarbitrary_iter(self.$method(), var));
+    };
+    ($typ: ty) => {
+        delegate_iter!([] $typ);
     };
 }
 
 macro_rules! delegate_hash {
     ([$($bounds: tt)*] $typ: ty) => {
-        impl<$($bounds)*> $crate::coarbitrary::CoArbitrary for $typ {
-            fn coarbitrary(&self, var: $crate::coarbitrary::Perturbable) {
-                $crate::coarbitrary::coarbitrary_hash(self, var);
-            }
-        }
+        coarbitrary!([$($bounds)*] $typ; self, var =>
+            $crate::coarbitrary::coarbitrary_hash(self, var));
+    };
+    ($typ: ty) => {
+        delegate_hash!([] $typ);
+    };
+}
+
+macro_rules! delegate_deref {
+    ([$($bounds: tt)*] $typ: ty) => {
+        coarbitrary!([$($bounds)*] $typ; self, var => var.nest(&**self));
+    };
+    ($typ: ty) => {
+        delegate_deref!([] $typ);
     };
 }
 

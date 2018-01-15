@@ -4,14 +4,6 @@ use coarbitrary::*;
 
 use std::rc::*;
 
-impl<A: CoArbitrary + ?Sized> CoArbitrary for Rc<A> {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.nest(&**self);
-    }
-}
-
-impl<A: CoArbitrary + ?Sized> CoArbitrary for Weak<A> {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.nest(&self.upgrade());
-    }
-}
+delegate_deref!([A: CoArbitrary + ?Sized] Rc<A>);
+coarbitrary!([A: CoArbitrary + ?Sized] Weak<A>;
+    self, var => var.nest(&self.upgrade()));

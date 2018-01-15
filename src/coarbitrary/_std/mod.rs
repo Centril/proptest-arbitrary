@@ -36,5 +36,3 @@ mod thread;
 mod time;
 #[cfg(feature = "unstable")]
 mod raw;
-
-// DONE

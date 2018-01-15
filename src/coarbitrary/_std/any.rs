@@ -1,3 +1,3 @@
 use std::any::TypeId;
 
-delegate_hash!([] TypeId);
+delegate_hash!(TypeId);

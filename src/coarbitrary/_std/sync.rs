@@ -14,121 +14,49 @@ use std::sync::mpsc::*;
 // Same for Condvar.
 // Same for Once.
 
-impl<A: CoArbitrary + ?Sized> CoArbitrary for Arc<A> {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.nest(&**self);
-    }
-}
+delegate_deref!([A: CoArbitrary + ?Sized] Arc<A>);
+coarbitrary!([A: CoArbitrary + ?Sized] Weak<A>;
+    self, var => var.nest(&self.upgrade()));
 
-impl<A: CoArbitrary + ?Sized> CoArbitrary for Weak<A> {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.nest(&self.upgrade());
-    }
-}
-
-impl CoArbitrary for BarrierWaitResult {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.nest(&self.is_leader());
-    }
-}
-
-impl CoArbitrary for WaitTimeoutResult {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.nest(&self.timed_out());
-    }
-}
-
-impl<'a, T: ?Sized + CoArbitrary> CoArbitrary for MutexGuard<'a, T> {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.nest(&**self);
-    }
-}
-
-impl<'a, T: ?Sized + CoArbitrary> CoArbitrary for RwLockReadGuard<'a, T> {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.nest(&**self);
-    }
-}
-
-impl<'a, T: ?Sized + CoArbitrary> CoArbitrary for RwLockWriteGuard<'a, T> {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.nest(&**self);
-    }
-}
-
-impl<T: CoArbitrary> CoArbitrary for PoisonError<T> {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.nest(self.get_ref());
-    }
-}
-
-impl<T: CoArbitrary> CoArbitrary for TryLockError<T> {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        match *self {
-            TryLockError::Poisoned(ref a) => var.variant(0).nest(a),
-            TryLockError::WouldBlock => var.variant(1),
-        };
-    }
-}
+coarbitrary!(BarrierWaitResult; self, var => var.nest(&self.is_leader()));
+coarbitrary!(WaitTimeoutResult; self, var => var.nest(&self.timed_out()));
+delegate_deref!(['a, T: ?Sized + CoArbitrary] MutexGuard<'a, T>);
+delegate_deref!(['a, T: ?Sized + CoArbitrary] RwLockReadGuard<'a, T>);
+delegate_deref!(['a, T: ?Sized + CoArbitrary] RwLockWriteGuard<'a, T>);
+coarbitrary!([T: CoArbitrary] PoisonError<T>;
+    self, var => var.nest(self.get_ref()));
+coarbitrary!([T: CoArbitrary] TryLockError<T>; self, var => match *self {
+    TryLockError::Poisoned(ref a) => var.variant(0).nest(a),
+    TryLockError::WouldBlock => var.variant(1),
+});
 
 #[cfg(feature = "unstable")]
-impl CoArbitrary for OnceState {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.nest(&self.poisoned());
-    }
-}
-
-impl CoArbitrary for Ordering {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        match *self {
-            Ordering::Relaxed => var.variant(0),
-            Ordering::Release => var.variant(1),
-            Ordering::Acquire => var.variant(2),
-            Ordering::AcqRel => var.variant(3),
-            Ordering::SeqCst => var.variant(4),
-            _ => var.variant(5),
-        };
-    }
-}
-
-impl CoArbitrary for RecvTimeoutError {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        match *self {
-            RecvTimeoutError::Timeout => var.variant(0),
-            RecvTimeoutError::Disconnected => var.variant(1),
-        };
-    }
-}
-
-impl CoArbitrary for TryRecvError {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        match *self {
-            TryRecvError::Empty => var.variant(0),
-            TryRecvError::Disconnected => var.variant(1),
-        };
-    }
-}
-
-impl<T: CoArbitrary> CoArbitrary for TrySendError<T> {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        match *self {
-            TrySendError::Full(ref a) => var.variant(0).nest(a),
-            TrySendError::Disconnected(ref a) => var.variant(1).nest(a),
-        };
-    }
-}
+coarbitrary!(OnceState; self, var => var.nest(&self.poisoned()));
+coarbitrary!(Ordering; self, var => match *self {
+    Ordering::Relaxed => var.variant(0),
+    Ordering::Release => var.variant(1),
+    Ordering::Acquire => var.variant(2),
+    Ordering::AcqRel => var.variant(3),
+    Ordering::SeqCst => var.variant(4),
+    _ => var.variant(5),
+});
+coarbitrary!(RecvTimeoutError; self, var => match *self {
+    RecvTimeoutError::Timeout => var.variant(0),
+    RecvTimeoutError::Disconnected => var.variant(1),
+});
+coarbitrary!(TryRecvError; self, var => match *self {
+    TryRecvError::Empty => var.variant(0),
+    TryRecvError::Disconnected => var.variant(1),
+});
+coarbitrary!([T: CoArbitrary] TrySendError<T>; self, var => match *self {
+    TrySendError::Full(ref a) => var.variant(0).nest(a),
+    TrySendError::Disconnected(ref a) => var.variant(1).nest(a),
+});
 
 #[cfg(feature = "unstable")]
-impl<'rx, T: Send + CoArbitrary> CoArbitrary for Handle<'rx, T> {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.nest(&self.id());
-    }
-}
+coarbitrary!(['rx, T: Send + CoArbitrary] Handle<'rx, T>;
+    self, var => var.nest(&self.id()));
 
 coarbitrary_unit!(RecvError);
 
-impl<T: CoArbitrary> CoArbitrary for SendError<T> {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.nest(&self.0);
-    }
-}
+coarbitrary!([T: CoArbitrary] SendError<T>; self, var => var.nest(&self.0));

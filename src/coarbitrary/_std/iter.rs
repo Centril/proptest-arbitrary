@@ -12,9 +12,7 @@ delegate_iter!(['a
                , A: Clone + Iterator<Item = &'a T>]
                Cloned<A>);
 
-impl<A> CoArbitrary for Empty<A> {
-    fn coarbitrary(&self, _: Perturbable) {}
-}
+coarbitrary!([A] Empty<A>; self, _var => {});
 
 delegate_iter!([ T: CoArbitrary, A: Clone + Iterator<Item = T>] Enumerate<A>);
 

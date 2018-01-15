@@ -2,8 +2,4 @@
 
 use coarbitrary::*;
 
-impl<A: CoArbitrary + ?Sized> CoArbitrary for Box<A> {
-    fn coarbitrary(&self, mut var: Perturbable) {
-        var.nest(&**self);
-    }
-}
+delegate_deref!([A: CoArbitrary + ?Sized] Box<A>);
