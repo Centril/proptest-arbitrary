@@ -50,7 +50,7 @@ macro_rules! dst_wrapped {
 
 dst_wrapped!(Box, Rc, Arc);
 
-generator!(FromUtf16Error, || String::from_utf16(&[0xD800]).unwrap_err());
+lazy_just!(FromUtf16Error, || String::from_utf16(&[0xD800]).unwrap_err());
 
 // This is a void-like type, it needs to be handled by the user of
 // the type by simply never constructing the variant in an enum or for

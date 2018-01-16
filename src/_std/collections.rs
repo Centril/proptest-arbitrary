@@ -233,7 +233,7 @@ arbitrary!([A: Arbitrary] Bound<A>,
     TupleUnion<(
         W<SFnPtrMap<Arc<A::Strategy>, Self>>,
         W<SFnPtrMap<Arc<A::Strategy>, Self>>,
-        W<FnGenerator<Self>>
+        W<LazyJustFn<Self>>
     )>,
     A::Parameters;
     args => {
@@ -241,7 +241,7 @@ arbitrary!([A: Arbitrary] Bound<A>,
         prop_oneof![
             2 => static_map(base.clone(), Bound::Included),
             2 => static_map(base, Bound::Excluded),
-            1 => Generator::new(|| Bound::Unbounded),
+            1 => LazyJust::new(|| Bound::Unbounded),
         ]
     }
 );
@@ -251,7 +251,7 @@ lift1!(['static] Bound<A>; base => {
     prop_oneof![
         2 => base.clone().prop_map(Bound::Included),
         2 => base.prop_map(Bound::Excluded),
-        1 => FnGenerator::new(|| Bound::Unbounded),
+        1 => LazyJustFn::new(|| Bound::Unbounded),
     ]
 });
 

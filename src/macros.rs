@@ -84,11 +84,11 @@ macro_rules! wrap_from {
     };
 }
 
-macro_rules! generator {
+macro_rules! lazy_just {
     ($($self: ty, $fun: expr);+) => {
         $(
-            arbitrary!($self, $crate::FnGenerator<Self>;
-                $crate::FnGenerator::new($fun));
+            arbitrary!($self, $crate::LazyJustFn<Self>;
+                $crate::LazyJustFn::new($fun));
         )+
     };
 }

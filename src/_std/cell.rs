@@ -6,7 +6,7 @@ wrap_from!([Copy] Cell);
 wrap_from!(RefCell);
 wrap_from!(UnsafeCell);
 
-generator!(BorrowError, || {
+lazy_just!(BorrowError, || {
     // False positive:
     #[cfg_attr(feature = "cargo-clippy", allow(let_and_return))]
     {
@@ -20,7 +20,7 @@ generator!(BorrowError, || {
         ret
     }
 });
-generator!(BorrowMutError, || {
+lazy_just!(BorrowMutError, || {
     // False positive:
     #[cfg_attr(feature = "cargo-clippy", allow(let_and_return))]
     {

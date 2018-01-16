@@ -424,8 +424,9 @@ pub mod functor;
 mod utils;
 use utils::*;
 pub use utils::{Mapped, FMapped as MappedF, SMapped as MappedS};
-pub use extras::*;
-mod extras;
+
+pub use lazy_just::*;
+mod lazy_just;
 
 mod params;
 pub use params::*;
@@ -449,3 +450,4 @@ mod tuples;
 // (lexical_pos: usize) -> likelyhood: usize.
 
 pub mod coarbitrary;
+//pub mod closure;

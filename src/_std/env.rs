@@ -7,7 +7,7 @@ use std::ffi::OsString;
 
 // FIXME: SplitPaths when lifetimes in strategies are possible.
 
-generator!(
+lazy_just!(
     Args, args;
     ArgsOs, args_os;
     Vars, vars;

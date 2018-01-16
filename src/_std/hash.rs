@@ -9,7 +9,7 @@ use std::collections::hash_map::{DefaultHasher, RandomState};
 // over-constrain on purpose!
 arbitrary!([H: Default + Hasher] BuildHasherDefault<H>; default());
 
-generator!(DefaultHasher, default; RandomState, default);
+lazy_just!(DefaultHasher, default; RandomState, default);
 
 #[cfg(test)]
 mod test {

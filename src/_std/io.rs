@@ -45,7 +45,7 @@ arbitrary!(
 
 wrap_ctor!(Cursor);
 
-generator!(
+lazy_just!(
       Empty, empty
     ; Sink, sink
     ; Stderr, stderr
