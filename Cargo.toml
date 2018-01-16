@@ -35,9 +35,9 @@ unstable = []
 frunk = ["frunk_core"]
 
 [dependencies]
-proptest = "0.3.4"
+proptest = "0.4.0"
 
-rand = "0.3.18"
+rand = "0.4.2"
 
 frunk_core = { version = "0.0.21", optional = true }
 

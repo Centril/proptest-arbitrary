@@ -28,17 +28,9 @@ impl<T, F: Fn() -> T> LazyJust<T, F> {
     }
 }
 
-impl<T, F: Copy + Fn() -> T> Copy for LazyJust<T, F> {}
-
-impl<T, F: Clone + Fn() -> T> Clone for LazyJust<T, F> {
-    fn clone(&self) -> Self {
-        Self { function: self.function.clone() }
-    }
-}
-
 impl<T: Debug, F: Clone + Fn() -> T> Strategy for LazyJust<T, F> {
     type Value = Self;
-    fn new_value(&self, _: &mut TestRunner) -> Result<Self::Value, String> {
+    fn new_value(&self, _: &mut TestRunner) -> NewTree<Self> {
         Ok(self.clone())
     }
 }
@@ -48,6 +40,14 @@ impl<V: Debug, F: Fn() -> V> ValueTree for LazyJust<V, F> {
     fn current(&self) -> Self::Value { (self.function)() }
     fn simplify(&mut self) -> bool { false }
     fn complicate(&mut self) -> bool { false }
+}
+
+impl<T, F: Copy + Fn() -> T> Copy for LazyJust<T, F> {}
+
+impl<T, F: Clone + Fn() -> T> Clone for LazyJust<T, F> {
+    fn clone(&self) -> Self {
+        Self { function: self.function.clone() }
+    }
 }
 
 impl<V, F: Fn() -> V> Debug for LazyJust<V, F> {
