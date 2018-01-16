@@ -450,4 +450,4 @@ mod tuples;
 // (lexical_pos: usize) -> likelyhood: usize.
 
 pub mod coarbitrary;
-//pub mod closure;
+pub mod closure;
