@@ -15,9 +15,9 @@ macro_rules! impl_wrap_char {
 impl_wrap_char!(EscapeDebug,   char::escape_debug);
 impl_wrap_char!(EscapeDefault, char::escape_default);
 impl_wrap_char!(EscapeUnicode, char::escape_unicode);
-#[cfg(MIN_VER_1_24_0)]
+#[cfg(feature = "unstable")]
 impl_wrap_char!(ToLowercase,   char::to_lowercase);
-#[cfg(MIN_VER_1_24_0)]
+#[cfg(feature = "unstable")]
 impl_wrap_char!(ToUppercase,   char::to_uppercase);
 
 #[cfg(feature = "unstable")]
@@ -29,7 +29,7 @@ arbitrary!(DecodeUtf8<<Vec<u8> as IntoIterator>::IntoIter>,
     ))
 );
 
-#[cfg(MIN_VER_1_24_0)]
+#[cfg(feature = "unstable")]
 arbitrary!(DecodeUtf16<<Vec<u16> as IntoIterator>::IntoIter>,
     Flatten<Mapped<u16, SMapped<Vec<u16>, Self>>>;
     any::<u16>().prop_flat_map(|size| any_with_smap(
@@ -64,15 +64,11 @@ mod test {
         decode_utf16_error => DecodeUtf16Error
     );
 
-    #[cfg(MIN_VER_1_24_0)]
+    #[cfg(feature = "unstable")]
     no_panic_test!(
         to_lowercase => ToLowercase,
         to_uppercase => ToUppercase,
         decode_utf16 => DecodeUtf16<<Vec<u16> as IntoIterator>::IntoIter>
-    );
-
-    #[cfg(feature = "unstable")]
-    no_panic_test!(
         decode_utf8 => DecodeUtf8<<Vec<u8> as IntoIterator>::IntoIter>,
         char_try_from_error => CharTryFromError
     );

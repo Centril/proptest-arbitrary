@@ -13,14 +13,14 @@ use std::time::Duration;
 
 wrap_from!(Arc);
 
-#[cfg(not(MIN_VER_1_24_0))]
+#[cfg(not(feature = "unstable"))]
 wrap_ctor!(Mutex);
-#[cfg(MIN_VER_1_24_0)]
+#[cfg(feature = "unstable")]
 wrap_from!(Mutex);
 
-#[cfg(not(MIN_VER_1_24_0))]
+#[cfg(not(feature = "unstable"))]
 wrap_ctor!(RwLock);
-#[cfg(MIN_VER_1_24_0)]
+#[cfg(feature = "unstable")]
 wrap_from!(RwLock);
 
 arbitrary!(Barrier, SMapped<u16, Self>;  // usize would be extreme!

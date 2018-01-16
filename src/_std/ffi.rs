@@ -33,11 +33,11 @@ macro_rules! dst_wrapped {
 
 dst_wrapped!(Box);
 
-#[cfg(MIN_VER_1_24_0)]
+#[cfg(feature = "unstable")]
 use std::rc::Rc;
-#[cfg(MIN_VER_1_24_0)]
+#[cfg(feature = "unstable")]
 use std::sync::Arc;
-#[cfg(MIN_VER_1_24_0)]
+#[cfg(feature = "unstable")]
 dst_wrapped!(Rc, Arc);
 
 arbitrary!(FromBytesWithNulError, SMapped<Option<u16>, Self>; {
@@ -75,7 +75,7 @@ mod test {
         into_string_error => IntoStringError,
         from_bytes_with_nul => FromBytesWithNulError
     );
-    #[cfg(MIN_VER_1_24_0)]
+    #[cfg(feature = "unstable")]
     no_panic_test!(
         rc_c_str => Rc<CStr>,
         rc_os_str => Rc<OsStr>,

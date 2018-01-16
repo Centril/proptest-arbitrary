@@ -14,6 +14,7 @@ coarbitrary!(FileType; self, var =>
 
 coarbitrary!(Permissions; self, var => var.nest(&self.readonly()));
 
+#[cfg(feature = "unstable")]
 coarbitrary!(Metadata; self, var => 
     var.nest(&self.file_type())
        .nest(&self.len())

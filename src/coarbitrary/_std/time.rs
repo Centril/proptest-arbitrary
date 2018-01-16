@@ -1,7 +1,9 @@
 use std::time::*;
 
 delegate_hash!(Duration);
-delegate_hash!(Instant);
+#[cfg(feature = "unstable")]
 delegate_hash!(SystemTime);
+#[cfg(feature = "unstable")]
+delegate_hash!(Instant);
 
 coarbitrary!(SystemTimeError; self, var => var.nest(&self.duration()));
